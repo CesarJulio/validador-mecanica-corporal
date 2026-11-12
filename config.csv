@@ -1,0 +1,29 @@
+clave,valor,descripcion
+mensaje,,"Aviso que ven los estudiantes arriba de la página. Déjalo vacío si no hay aviso."
+levantamiento.activo,TRUE,Levantamiento de carga desde el suelo
+levantamiento.rodilla_max,120,Ángulo máximo de rodilla en grados (menor = exige agacharse más)
+levantamiento.tronco_max,45,Inclinación máxima del tronco en grados
+levantamiento.bajada_min,0.7,Tiempo mínimo de descenso en segundos
+rcp.activo,TRUE,RCP: compresiones torácicas
+rcp.codo_min,160,Ángulo mínimo del codo en grados (180 = brazo recto)
+rcp.hombros_max,20,Desviación máxima de la línea hombro-mano respecto a la vertical
+rcp.ritmo_min,100,Compresiones por minuto mínimas
+rcp.ritmo_max,120,Compresiones por minuto máximas
+hombro.activo,TRUE,Abducción de hombro (rehabilitación)
+hombro.abd_min,150,Abducción mínima del brazo en grados
+hombro.tronco_max,10,Inclinación lateral máxima del tronco en grados
+hombro.codo_min,150,Ángulo mínimo del codo en grados
+silla.activo,TRUE,Sentarse y levantarse de la silla en 30 segundos
+silla.rodilla_min,160,Extensión mínima de rodilla al ponerse de pie
+silla.cadera_min,160,Extensión mínima de cadera al ponerse de pie
+silla.duracion,30,Duración de la prueba en segundos
+silla.meta,12,Meta de levantadas correctas
+empujar.activo,TRUE,Empujar o halar camilla o silla de ruedas
+empujar.tronco_max,30,Inclinación máxima del tronco en grados
+empujar.codo_max,165,Ángulo máximo del codo en grados (evita brazos bloqueados)
+empujar.base_min,0.35,Separación mínima de los pies como fracción del largo de la pierna
+empujar.tramo,3,Segundos de cada tramo evaluado
+equilibrio.activo,TRUE,Equilibrio en un pie
+equilibrio.tiempo_min,10,Segundos mínimos en un pie
+equilibrio.osc_max,0.3,Oscilación máxima de la cadera como fracción del ancho de hombros
+equilibrio.tronco_max,10,Inclinación lateral máxima del tronco en grados

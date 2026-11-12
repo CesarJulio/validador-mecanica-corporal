@@ -1,0 +1,956 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Validador de Mecánica Corporal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: menú de ejercicios arriba; escenario de cámara + panel clínico; una columna en móvil con la cámara primero */
+:root {
+  --bg: #f3f6f7;
+  --surface: #ffffff;
+  --ink: #12262e;
+  --muted: #5a6f77;
+  --line: #d6e0e3;
+  --accent: #0f7c8c;
+  --accent-ink: #ffffff;
+  --accent-soft: #dff0f2;
+  --ok: #1d8a4e;
+  --ok-soft: #e2f4ea;
+  --bad: #c2362f;
+  --bad-soft: #fbe6e4;
+  --idle: #9aabb1;
+  --stage: #0b1a20;
+  --f-display: "Archivo", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1a1f; --surface: #14252b; --ink: #e3eef1; --muted: #93a8af; --line: #24393f;
+    --accent: #3fb8c8; --accent-ink: #062027; --accent-soft: #123138; --ok: #4cc882; --ok-soft: #133526;
+    --bad: #ff7a70; --bad-soft: #3d1c1a; --idle: #5d7279; --stage: #050d10; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1a1f; --surface: #14252b; --ink: #e3eef1; --muted: #93a8af; --line: #24393f;
+  --accent: #3fb8c8; --accent-ink: #062027; --accent-soft: #123138; --ok: #4cc882; --ok-soft: #133526;
+  --bad: #ff7a70; --bad-soft: #3d1c1a; --idle: #5d7279; --stage: #050d10; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--f-body); font-size: 16px; line-height: 1.5;
+}
+.wrap {
+  max-width: 1280px; margin: 0 auto;
+  padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+header { margin-bottom: 14px; }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(1.45rem, 3vw, 2.1rem); margin: 0; line-height: 1.1; text-wrap: balance; }
+.eyebrow { font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 4px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.badge { background: var(--accent); color: var(--accent-ink); border-radius: 999px; padding: 1px 8px; letter-spacing: .06em; }
+.sub { color: var(--muted); margin: 4px 0 0; max-width: 64ch; }
+h2 { font-family: var(--f-display); font-size: 1.05rem; margin: 0 0 10px; font-weight: 700; }
+
+.notice { background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; font-weight: 700; }
+
+.exbar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; scrollbar-width: thin; }
+.exbtn {
+  flex: 0 0 auto; text-align: left; font: inherit; cursor: pointer; border-radius: 12px; padding: 8px 14px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink); display: grid; gap: 0;
+}
+.exbtn strong { font-family: var(--f-display); font-size: .95rem; }
+.exbtn span { font-size: .75rem; color: var(--muted); }
+.exbtn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.exbtn[aria-pressed="true"] span { color: var(--accent-ink); opacity: .85; }
+.exbtn.off { border-style: dashed; opacity: .75; }
+.noex { color: var(--muted); padding: 10px 0; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+.stage {
+  position: relative; background: var(--stage); border-radius: 14px; overflow: hidden;
+  aspect-ratio: 4 / 3; max-width: 100%; max-height: 78vh; width: 100%; display: grid; place-items: center;
+}
+.stage video, .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.stage.mirror video, .stage.mirror canvas { transform: scaleX(-1); }
+.placeholder { position: relative; z-index: 2; color: #c9d8dc; text-align: center; padding: 24px; max-width: 46ch; }
+.placeholder svg { width: 110px; height: auto; margin-bottom: 8px; opacity: .85; }
+.hud { position: absolute; z-index: 3; left: 10px; top: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 6px; pointer-events: none; }
+.chip {
+  font-family: var(--f-mono); font-size: .8rem; padding: 4px 10px; border-radius: 999px;
+  background: rgba(5, 15, 18, .75); color: #e7f1f3; border: 1px solid rgba(255,255,255,.16);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.chip.ok { border-color: #4cc882; color: #b9f1cf; }
+.chip.bad { border-color: #ff7a70; color: #ffd0cb; }
+.chip.phase { background: rgba(15, 124, 140, .85); border-color: transparent; color: #fff; }
+.banner {
+  position: absolute; z-index: 3; left: 10px; right: 10px; bottom: 10px; padding: 10px 14px; border-radius: 10px;
+  font-weight: 700; background: rgba(5, 15, 18, .82); color: #fff; text-align: center;
+}
+.banner.ok { background: rgba(29, 138, 78, .94); }
+.banner.bad { background: rgba(194, 54, 47, .94); }
+
+.controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center; }
+button, .filebtn {
+  font: inherit; font-weight: 700; border-radius: 10px; padding: 10px 16px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+}
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button:focus-visible, .exbtn:focus-visible, .filebtn:focus-within, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.filebtn input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.filebtn { position: relative; display: inline-flex; }
+.status { color: var(--muted); font-size: .9rem; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+.stack { display: grid; gap: 14px; }
+
+.score { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.score div { text-align: center; padding: 8px 4px; border-radius: 10px; background: var(--bg); }
+.score strong { display: block; font-family: var(--f-display); font-size: 1.9rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.score span { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.score .g strong { color: var(--ok); }
+.score .r strong { color: var(--bad); }
+
+.crit { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.crit li { display: grid; grid-template-columns: 14px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 10px; background: var(--bg); }
+.dot { width: 14px; height: 14px; border-radius: 50%; background: var(--idle); }
+.dot.ok { background: var(--ok); }
+.dot.bad { background: var(--bad); }
+.crit .lbl { font-weight: 700; }
+.crit .rule { display: block; font-size: .8rem; color: var(--muted); font-weight: 400; }
+.crit .val { font-family: var(--f-mono); font-size: .9rem; font-variant-numeric: tabular-nums; }
+
+.last { border-radius: 10px; padding: 12px; background: var(--bg); margin-top: 10px; }
+.last.ok { background: var(--ok-soft); }
+.last.bad { background: var(--bad-soft); }
+.last p { margin: 4px 0 0; }
+.last ul { margin: 6px 0 0; padding-left: 18px; }
+
+.hist { max-height: 240px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; }
+table { width: 100%; border-collapse: collapse; font-size: .86rem; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); position: sticky; top: 0; background: var(--surface); }
+td.okc { color: var(--ok); font-weight: 700; }
+td.badc { color: var(--bad); font-weight: 700; }
+.empty { color: var(--muted); font-size: .9rem; padding: 10px; }
+
+details { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 12px; }
+summary { cursor: pointer; font-weight: 700; }
+.slider { display: grid; gap: 2px; margin-top: 10px; }
+.slider label { display: flex; justify-content: space-between; gap: 8px; font-size: .9rem; }
+.slider output { font-family: var(--f-mono); white-space: nowrap; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.toggle { display: flex; gap: 8px; align-items: center; margin-top: 8px; font-size: .92rem; }
+.note { font-size: .82rem; color: var(--muted); margin: 8px 0 0; }
+
+.guide { margin-top: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.guide .panel p, .guide .panel li { color: var(--muted); font-size: .93rem; }
+.guide ol, .guide ul { padding-left: 18px; margin: 0; }
+.guide p { margin: 0; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Enfermería · Laboratorio de movimiento <span class="badge" id="teacherBadge" hidden>Vista docente</span></div>
+    <h1>Validador de Mecánica Corporal</h1>
+    <p class="sub">Elige un ejercicio. La IA detecta tu postura con la cámara y evalúa cada repetición contra criterios clínicos.</p>
+  </header>
+
+  <div class="notice" id="notice" hidden></div>
+  <nav class="exbar" id="exbar" aria-label="Ejercicios"><span class="noex">Cargando ejercicios…</span></nav>
+
+  <div class="grid">
+    <section>
+      <div class="stage" id="stage">
+        <video id="video" playsinline muted></video>
+        <canvas id="canvas"></canvas>
+        <div class="placeholder" id="placeholder">
+          <svg viewBox="0 0 120 90" aria-hidden="true">
+            <g fill="none" stroke="#3fb8c8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="46" cy="14" r="7"/>
+              <path d="M46 22 L54 46 L74 52 L72 78"/>
+              <path d="M54 46 L40 62 L46 80"/>
+              <path d="M48 28 L64 44 L78 60"/>
+              <rect x="74" y="60" width="22" height="18" rx="2"/>
+            </g>
+          </svg>
+          <div id="phText">Activa la cámara o sube un video.</div>
+        </div>
+        <div class="hud" id="hud" hidden></div>
+        <div class="banner" id="banner" hidden></div>
+      </div>
+      <div class="controls">
+        <button class="primary" id="btnCam" disabled>Activar cámara</button>
+        <button id="btnFlip" hidden>Cambiar cámara</button>
+        <label class="filebtn">Analizar un video
+          <input type="file" id="fileIn" accept="video/*" disabled>
+        </label>
+        <button id="btnStop" disabled>Detener</button>
+        <button id="btnReset">Reiniciar conteo</button>
+      </div>
+      <p class="status" id="status">Cargando el modelo de IA…</p>
+    </section>
+
+    <aside class="stack">
+      <div class="panel">
+        <h2 id="scoreTitle">Resultado de la sesión</h2>
+        <div class="score">
+          <div><strong id="nTotal">0</strong><span id="lblTotal">Repeticiones</span></div>
+          <div class="g"><strong id="nOk">0</strong><span>Correctas</span></div>
+          <div class="r"><strong id="nBad">0</strong><span>Incorrectas</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Criterios de la última evaluación</h2>
+        <ul class="crit" id="critList"></ul>
+        <div class="last" id="last"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Historial</h2>
+        <div class="hist">
+          <table>
+            <thead id="histHead"></thead>
+            <tbody id="histBody"></tbody>
+          </table>
+          <div class="empty" id="histEmpty">Aún no hay registros.</div>
+        </div>
+        <div class="controls">
+          <button id="btnCopy">Copiar resumen</button>
+          <span class="status" id="copyMsg"></span>
+        </div>
+        <details>
+          <summary>Opciones</summary>
+          <label class="toggle"><input type="checkbox" id="cSound" checked> Sonido al terminar cada repetición</label>
+          <label class="toggle"><input type="checkbox" id="cVoice" checked> Correcciones por voz</label>
+          <label class="toggle"><input type="checkbox" id="cMirror" checked> Ver la cámara frontal como espejo</label>
+        </details>
+        <details id="teacher" hidden open>
+          <summary>Ajustar criterios (docente)</summary>
+          <div id="sliders"></div>
+          <p class="note">Estos cambios aplican solo en este dispositivo. Para cambiar los criterios de todo el curso, edita la hoja de configuración.</p>
+          <p class="note" id="cfgSource"></p>
+        </details>
+      </div>
+    </aside>
+  </div>
+
+  <div class="guide">
+    <div class="panel"><h2>Cómo grabarse</h2><ol id="gSteps"></ol></div>
+    <div class="panel"><h2>Qué se evalúa</h2><ul id="gEval"></ul></div>
+    <div class="panel"><h2>Base clínica</h2><p id="gBasis"></p></div>
+  </div>
+</div>
+
+<script type="module">
+import { PoseLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
+
+// =====================================================================
+// CONFIGURACIÓN DEL DOCENTE
+// Pega aquí el enlace CSV publicado de tu hoja de Google Sheets.
+// Si queda vacío, se usa el archivo config.csv que está junto a esta página.
+const CONFIG_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSccH3IygOJ8azZwYul0y3_Rrnqoe_sagwgM76bnlp0fyaqhjqfp_m-ZA7ap2dDyJEVbClWE1AQOJT4/pub?output=csv";
+// =====================================================================
+
+const DOCENTE = new URLSearchParams(location.search).has("docente");
+const $ = (id) => document.getElementById(id);
+const video = $("video"), canvas = $("canvas"), ctx = canvas.getContext("2d"), stage = $("stage");
+
+// ---------- geometría ----------
+const S = { L: { sh: 11, el: 13, wr: 15, hip: 23, kn: 25, an: 27 }, R: { sh: 12, el: 14, wr: 16, hip: 24, kn: 26, an: 28 } };
+const deg = (r) => r * 180 / Math.PI;
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, v: Math.min(a.v, b.v) });
+function angleAt(a, b, c) {
+  const v1x = a.x - b.x, v1y = a.y - b.y, v2x = c.x - b.x, v2y = c.y - b.y;
+  const cos = (v1x * v2x + v1y * v2y) / (Math.hypot(v1x, v1y) * Math.hypot(v2x, v2y) || 1);
+  return deg(Math.acos(Math.max(-1, Math.min(1, cos))));
+}
+const fromVertical = (a, b) => deg(Math.atan2(Math.abs(b.x - a.x), Math.abs(b.y - a.y)));
+const visible = (pts, th = 0.5) => pts.every((p) => p.v >= th);
+function sideOf(F, keys) {
+  const score = (s) => keys.reduce((acc, k) => acc + F.v(S[s][k]), 0);
+  const s = score("L") >= score("R") ? "L" : "R";
+  const o = {}; keys.forEach((k) => (o[k] = F.P(S[s][k]))); return o;
+}
+function sm(st, k, v, a = 0.45) { st.s ??= {}; st.s[k] = st.s[k] == null ? v : st.s[k] + a * (v - st.s[k]); return st.s[k]; }
+
+// ---------- formatos ----------
+const fDeg = (v) => v == null ? "—" : Math.round(v) + "°";
+const fSec = (v) => v == null ? "—" : v.toFixed(1).replace(".", ",") + " s";
+const fPct = (v) => v == null ? "—" : Math.round(v * 100) + " %";
+const fRate = (v) => v == null ? "—" : Math.round(v) + "/min";
+const fNum = (v) => String(v);
+
+// =====================================================================
+// EJERCICIOS
+// Cada uno define: parámetros (umbrales editables), criterios y update(),
+// que recibe la pose de cada cuadro y devuelve dibujo, avisos y repeticiones.
+// =====================================================================
+const EXERCISES = [
+{
+  id: "levantamiento", name: "Levantamiento de carga", view: "De perfil",
+  unit: "Repetición", units: "Repeticiones", g: "a",
+  steps: [
+    "Pon la cámara a la altura de la cadera, a unos 2 o 3 metros.",
+    "Colócate <strong>de lado</strong> a la cámara. Deben verse la cabeza y los pies.",
+    "Usa una caja o un objeto en el suelo como carga.",
+    "Empieza de pie, agáchate, toma la carga y vuelve a pararte."
+  ],
+  basis: "Levantar flexionando la columna con las piernas rectas (técnica en \"stoop\") concentra la carga en la zona lumbar. La técnica en cuclillas, con la espalda neutra y las rodillas flexionadas, reparte el esfuerzo hacia las piernas y es la recomendada en mecánica corporal.",
+  params: {
+    rodilla_max: { label: "Ángulo máximo de rodilla", def: 120, min: 80, max: 150, step: 5, f: fDeg },
+    tronco_max: { label: "Inclinación máxima del tronco", def: 45, min: 25, max: 70, step: 5, f: fDeg },
+    bajada_min: { label: "Tiempo mínimo de descenso", def: 0.7, min: 0.3, max: 2, step: 0.1, f: fSec }
+  },
+  criteria: [
+    { k: "rodilla", label: "Rodillas flexionadas", col: "Rodilla", rule: (p) => `Ángulo de rodilla ≤ ${fDeg(p.rodilla_max)}`, f: fDeg,
+      test: (v, p) => v <= p.rodilla_max, tip: (v) => `Flexiona más las rodillas: llegaste a ${fDeg(v)}. Baja con las piernas, no con la espalda.`, say: "Flexiona más las rodillas",
+      what: "Ángulo entre cadera, rodilla y tobillo. 180° es la pierna recta." },
+    { k: "tronco", label: "Espalda recta", col: "Tronco", rule: (p) => `Inclinación del tronco ≤ ${fDeg(p.tronco_max)}`, f: fDeg,
+      test: (v, p) => v <= p.tronco_max, tip: (v) => `Mantén la espalda más recta: el tronco se inclinó ${fDeg(v)}. Acércate a la carga y mantén el pecho erguido.`, say: "Mantén la espalda recta",
+      what: "Inclinación de la línea cadera-hombro respecto a la vertical." },
+    { k: "bajada", label: "Descenso controlado", col: "Bajada", rule: (p) => `Bajar en ≥ ${fSec(p.bajada_min)}`, f: fSec,
+      test: (v, p) => v >= p.bajada_min, tip: (v) => `Baja más despacio: el descenso duró ${fSec(v)}.`, say: "Baja más despacio",
+      what: "Tiempo entre empezar a bajar y llegar al punto más bajo." }
+  ],
+  update(F, st, p, t) {
+    const q = sideOf(F, ["sh", "hip", "kn", "an"]);
+    if (!visible(Object.values(q))) return { banner: "Aléjate un poco: deben verse hombro, cadera, rodilla y tobillo" };
+    const kA = sm(st, "k", angleAt(q.hip, q.kn, q.an)), tA = sm(st, "t", fromVertical(q.hip, q.sh));
+    const bent = tA > 25 || kA < 150, standing = tA < 18 && kA > 160;
+    const kOk = bent ? kA <= p.rodilla_max : null, tOk = bent ? tA <= p.tronco_max : null;
+    const out = { chips: [{ t: `Rodilla ${fDeg(kA)}`, ok: kOk }, { t: `Tronco ${fDeg(tA)}`, ok: tOk }],
+      segs: [[q.hip, q.sh, tOk], [q.hip, q.kn, kOk], [q.kn, q.an, kOk]], joints: Object.values(q) };
+    st.phase ??= "idle";
+    if (st.phase === "idle") {
+      out.phase = standing ? "De pie: listo" : "Esperando";
+      if (standing) st.phase = "up"; else out.banner = "Párate derecho para comenzar";
+      return out;
+    }
+    if (st.phase === "up") {
+      out.phase = "De pie";
+      if (bent) { st.phase = "down"; st.r = { t0: t, k: kA, tr: tA, depth: -1, tb: t }; }
+      return out;
+    }
+    const r = st.r; out.phase = "Levantamiento en curso";
+    r.k = Math.min(r.k, kA); r.tr = Math.max(r.tr, tA);
+    const d = (180 - kA) + tA; if (d > r.depth) { r.depth = d; r.tb = t; }
+    if (standing) {
+      st.phase = "up";
+      if (t - r.t0 >= 400 && !(r.k > 150 && r.tr < 30)) out.rep = { rodilla: r.k, tronco: r.tr, bajada: (r.tb - r.t0) / 1000 };
+    }
+    return out;
+  }
+},
+{
+  id: "rcp", name: "RCP: compresiones", view: "De perfil",
+  unit: "Compresión", units: "Compresiones", g: "a", quiet: true,
+  steps: [
+    "Usa un maniquí o un cojín firme en el suelo.",
+    "Pon la cámara <strong>de lado</strong>, a unos 2 metros, a la altura del pecho de quien comprime.",
+    "Arrodíllate junto al maniquí con las manos entrelazadas sobre el centro del pecho.",
+    "Haz compresiones continuas durante al menos 30 segundos."
+  ],
+  basis: "Las guías de reanimación recomiendan comprimir a 100–120 por minuto, con los brazos extendidos y los hombros alineados sobre las manos, para usar el peso del cuerpo y no la fuerza de los brazos. La cámara no mide la profundidad de la compresión (5–6 cm); para eso se necesita un maniquí con sensor.",
+  params: {
+    codo_min: { label: "Extensión mínima del codo", def: 160, min: 140, max: 175, step: 5, f: fDeg },
+    hombros_max: { label: "Desviación máxima hombro-mano", def: 20, min: 10, max: 35, step: 5, f: fDeg },
+    ritmo_min: { label: "Ritmo mínimo", def: 100, min: 80, max: 110, step: 5, f: (v) => v + "/min" },
+    ritmo_max: { label: "Ritmo máximo", def: 120, min: 110, max: 140, step: 5, f: (v) => v + "/min" }
+  },
+  criteria: [
+    { k: "codo", label: "Brazos rectos", col: "Codo", rule: (p) => `Ángulo del codo ≥ ${fDeg(p.codo_min)}`, f: fDeg,
+      test: (v, p) => v >= p.codo_min, tip: (v) => `Estira los brazos: el codo se dobló hasta ${fDeg(v)}. Bloquea los codos y empuja con el peso del cuerpo.`, say: "Brazos rectos",
+      what: "Ángulo entre hombro, codo y muñeca durante la compresión." },
+    { k: "hombros", label: "Hombros sobre las manos", col: "Hombros", rule: (p) => `Desviación ≤ ${fDeg(p.hombros_max)}`, f: fDeg,
+      test: (v, p) => v <= p.hombros_max, tip: (v) => `Pon los hombros justo encima de las manos: la línea hombro-mano se desvió ${fDeg(v)} de la vertical.`, say: "Hombros sobre las manos",
+      what: "Desviación de la línea hombro-muñeca respecto a la vertical." },
+    { k: "ritmo", label: "Ritmo", col: "Ritmo", rule: (p) => `Entre ${p.ritmo_min} y ${p.ritmo_max} por minuto`, f: fRate,
+      test: (v, p) => v == null || (v >= p.ritmo_min && v <= p.ritmo_max),
+      tip: (v, p) => v < p.ritmo_min ? `Comprime más rápido: vas a ${Math.round(v)} por minuto.` : `Comprime más despacio: vas a ${Math.round(v)} por minuto.`,
+      say: (v, p) => v < p.ritmo_min ? "Más rápido" : "Más despacio",
+      what: "Compresiones por minuto, calculadas con las últimas compresiones." }
+  ],
+  update(F, st, p, t) {
+    const q = sideOf(F, ["sh", "el", "wr", "hip"]);
+    if (!visible(Object.values(q))) return { banner: "Deben verse hombro, codo, muñeca y cadera del lado de la cámara" };
+    const L = dist(q.sh, q.hip);
+    const el = sm(st, "e", angleAt(q.sh, q.el, q.wr)), tl = sm(st, "h", fromVertical(q.sh, q.wr));
+    const y = sm(st, "y", q.sh.y, 0.6);
+    const eOk = el >= p.codo_min, hOk = tl <= p.hombros_max;
+    const rOk = st.rate == null ? null : (st.rate >= p.ritmo_min && st.rate <= p.ritmo_max);
+    const out = { chips: [{ t: `Codo ${fDeg(el)}`, ok: eOk }, { t: `Hombros ${fDeg(tl)}`, ok: hOk }, { t: `Ritmo ${fRate(st.rate)}`, ok: rOk }],
+      segs: [[q.sh, q.el, eOk], [q.el, q.wr, eOk], [q.sh, q.hip, null]], joints: Object.values(q) };
+    if (q.wr.y < q.sh.y + 0.3 * L) {
+      st.c = null; st.times = []; st.rate = null;
+      out.phase = "Fuera de posición"; out.banner = "Arrodíllate junto al maniquí con las manos sobre el centro del pecho";
+      return out;
+    }
+    out.phase = "Compresiones";
+    const thr = 0.03 * L;
+    if (!st.c) st.c = { dir: "up", ext: y, e: el, h: tl };
+    const c = st.c; c.e = Math.min(c.e, el); c.h = Math.max(c.h, tl);
+    if (c.dir === "up") { c.ext = Math.min(c.ext, y); if (y > c.ext + thr) { c.dir = "down"; c.ext = y; } }
+    else {
+      c.ext = Math.max(c.ext, y);
+      if (y < c.ext - thr) {
+        c.dir = "up"; c.ext = y;
+        st.times ??= [];
+        const last = st.times[st.times.length - 1];
+        if (last != null && t - last > 2000) st.times = [];
+        st.times.push(t); if (st.times.length > 5) st.times.shift();
+        st.rate = st.times.length >= 2 ? 60000 * (st.times.length - 1) / (st.times[st.times.length - 1] - st.times[0]) : null;
+        out.rep = { codo: c.e, hombros: c.h, ritmo: st.rate };
+        c.e = el; c.h = tl;
+      }
+    }
+    return out;
+  }
+},
+{
+  id: "hombro", name: "Abducción de hombro", view: "De frente",
+  unit: "Repetición", units: "Repeticiones", g: "a",
+  steps: [
+    "Ponte <strong>de frente</strong> a la cámara, a 2 o 3 metros, con el tronco y los brazos a la vista.",
+    "Empieza con los brazos a los lados del cuerpo.",
+    "Sube un brazo de lado, con el codo extendido, lo más alto que puedas.",
+    "Baja despacio y repite. Puedes alternar los brazos."
+  ],
+  basis: "La abducción de hombro se usa en la rehabilitación tras cirugía, inmovilización o lesión del manguito rotador. El rango normal llega a unos 170–180°. Inclinar el tronco hacia el lado contrario es la compensación más frecuente y hace parecer mayor el rango real.",
+  params: {
+    abd_min: { label: "Abducción mínima", def: 150, min: 90, max: 175, step: 5, f: fDeg },
+    tronco_max: { label: "Inclinación lateral máxima", def: 10, min: 5, max: 25, step: 1, f: fDeg },
+    codo_min: { label: "Extensión mínima del codo", def: 150, min: 120, max: 175, step: 5, f: fDeg }
+  },
+  criteria: [
+    { k: "abd", label: "Rango alcanzado", col: "Brazo", rule: (p) => `Abducción ≥ ${fDeg(p.abd_min)}`, f: fDeg,
+      test: (v, p) => v >= p.abd_min, tip: (v) => `Sube más el brazo: llegaste a ${fDeg(v)}.`, say: "Sube más el brazo",
+      what: "Ángulo entre el tronco (cadera-hombro) y el brazo (hombro-muñeca)." },
+    { k: "tronco", label: "Tronco sin compensar", col: "Tronco", rule: (p) => `Inclinación lateral ≤ ${fDeg(p.tronco_max)}`, f: fDeg,
+      test: (v, p) => v <= p.tronco_max, tip: (v) => `No inclines el cuerpo hacia el lado: el tronco se inclinó ${fDeg(v)}.`, say: "No inclines el tronco",
+      what: "Inclinación lateral de la línea media cadera-hombros." },
+    { k: "codo", label: "Codo extendido", col: "Codo", rule: (p) => `Ángulo del codo ≥ ${fDeg(p.codo_min)}`, f: fDeg,
+      test: (v, p) => v >= p.codo_min, tip: (v) => `Mantén el codo estirado: se dobló hasta ${fDeg(v)}.`, say: "Estira el codo",
+      what: "Ángulo del codo mientras el brazo está arriba." }
+  ],
+  update(F, st, p, t) {
+    const G = (k) => ({ L: F.P(S.L[k]), R: F.P(S.R[k]) });
+    const sh = G("sh"), el = G("el"), wr = G("wr"), hip = G("hip");
+    const okSide = (s) => visible([sh[s], el[s], wr[s], hip[s]]);
+    if (!okSide("L") && !okSide("R")) return { banner: "Ponte de frente: deben verse hombros, brazos y caderas" };
+    const ang = (s) => okSide(s) ? sm(st, "a" + s, angleAt(hip[s], sh[s], wr[s])) : 0;
+    const aL = ang("L"), aR = ang("R");
+    const tilt = sm(st, "t", fromVertical(mid(hip.L, hip.R), mid(sh.L, sh.R)));
+    const arm = st.arm || (aL >= aR ? "L" : "R");
+    const a = arm === "L" ? aL : aR;
+    const elb = sm(st, "e" + arm, angleAt(sh[arm], el[arm], wr[arm]));
+    const raised = a > 60;
+    const aOk = raised ? a >= p.abd_min : null, tOk = tilt <= p.tronco_max, eOk = raised ? elb >= p.codo_min : null;
+    const out = { chips: [{ t: `Brazo ${fDeg(a)}`, ok: aOk }, { t: `Tronco ${fDeg(tilt)}`, ok: tOk }, { t: `Codo ${fDeg(elb)}`, ok: eOk }],
+      segs: [[sh[arm], el[arm], eOk], [el[arm], wr[arm], eOk], [sh[arm], hip[arm], aOk], [mid(sh.L, sh.R), mid(hip.L, hip.R), tOk]],
+      joints: [sh[arm], el[arm], wr[arm], hip[arm]] };
+    st.phase ??= "idle";
+    if (st.phase === "idle") {
+      const down = aL < 30 && aR < 30;
+      out.phase = down ? "Brazos abajo: listo" : "Esperando";
+      if (down) st.phase = "ready"; else out.banner = "Baja los brazos para comenzar";
+      return out;
+    }
+    if (st.phase === "ready") {
+      out.phase = "Brazos abajo";
+      if (Math.max(aL, aR) > 45) { st.arm = aL >= aR ? "L" : "R"; st.phase = "up"; st.r = { a: 0, t: 0, e: 180 }; }
+      return out;
+    }
+    const r = st.r; out.phase = "Elevando el brazo";
+    r.a = Math.max(r.a, a); r.t = Math.max(r.t, tilt); if (a > 60) r.e = Math.min(r.e, elb);
+    if (a < 30) { st.phase = "ready"; st.arm = null; if (r.a > 60) out.rep = { abd: r.a, tronco: r.t, codo: r.e }; }
+    return out;
+  }
+},
+{
+  id: "silla", name: "Sentarse y levantarse (30 s)", view: "De perfil",
+  unit: "Levantada", units: "Levantadas", g: "a",
+  steps: [
+    "Usa una silla sin brazos, de unos 43 cm de altura, apoyada contra la pared.",
+    "Siéntate <strong>de lado</strong> a la cámara, con los brazos cruzados sobre el pecho.",
+    "El tiempo empieza al levantarte la primera vez.",
+    "Ponte de pie por completo y vuelve a sentarte tantas veces como puedas."
+  ],
+  basis: "Es la prueba de 30 segundos de sentarse y levantarse (30-Second Chair Stand Test), usada para valorar la fuerza de las piernas y el riesgo de caídas en adultos mayores. Un número de levantadas por debajo de lo esperado para la edad y el sexo indica riesgo. La meta se ajusta en la configuración.",
+  params: {
+    rodilla_min: { label: "Extensión mínima de rodilla al pararse", def: 160, min: 140, max: 175, step: 5, f: fDeg },
+    cadera_min: { label: "Extensión mínima de cadera al pararse", def: 160, min: 140, max: 175, step: 5, f: fDeg },
+    duracion: { label: "Duración de la prueba", def: 30, min: 15, max: 60, step: 5, f: (v) => v + " s" },
+    meta: { label: "Meta de levantadas correctas", def: 12, min: 5, max: 25, step: 1, f: fNum }
+  },
+  criteria: [
+    { k: "rodilla", label: "Rodillas extendidas", col: "Rodilla", rule: (p) => `Al pararse, rodilla ≥ ${fDeg(p.rodilla_min)}`, f: fDeg,
+      test: (v, p) => v >= p.rodilla_min, tip: (v) => `Ponte de pie por completo: la rodilla llegó a ${fDeg(v)}.`, say: "Párate por completo",
+      what: "Extensión máxima de la rodilla al ponerse de pie." },
+    { k: "cadera", label: "Cadera extendida", col: "Cadera", rule: (p) => `Al pararse, cadera ≥ ${fDeg(p.cadera_min)}`, f: fDeg,
+      test: (v, p) => v >= p.cadera_min, tip: (v) => `Endereza el tronco al final: la cadera llegó a ${fDeg(v)}.`, say: "Endereza el tronco",
+      what: "Ángulo hombro-cadera-rodilla al ponerse de pie." },
+    { k: "manos", label: "Sin apoyar las manos", col: "Manos", rule: () => "Brazos cruzados sobre el pecho", f: (v) => v == null ? "—" : v ? "En el pecho" : "Se apoyó",
+      test: (v) => v === 1, tip: () => "No te apoyes con las manos: mantén los brazos cruzados sobre el pecho.", say: "No uses las manos",
+      what: "Las muñecas deben quedar por encima de la cadera durante todo el movimiento." }
+  ],
+  update(F, st, p, t, info) {
+    const q = sideOf(F, ["sh", "hip", "kn", "an", "wr"]);
+    if (!visible([q.sh, q.hip, q.kn, q.an])) return { banner: "Deben verse hombro, cadera, rodilla y tobillo del lado de la cámara" };
+    const L = dist(q.sh, q.hip);
+    const kn = sm(st, "k", angleAt(q.hip, q.kn, q.an)), hp = sm(st, "h", angleAt(q.sh, q.hip, q.kn));
+    const hands = q.wr.v < 0.3 ? true : q.wr.y < q.hip.y - 0.15 * L;
+    const seated = kn < 115, standing = kn > 150;
+    const dur = p.duracion * 1000;
+    const left = st.t0 != null ? Math.max(0, dur - (t - st.t0)) : dur;
+    const kOk = standing ? kn >= p.rodilla_min : null, hOk = standing ? hp >= p.cadera_min : null;
+    const out = { chips: [{ t: `Tiempo ${Math.ceil(left / 1000)} s`, ok: null }, { t: `Rodilla ${fDeg(kn)}`, ok: kOk }, { t: `Cadera ${fDeg(hp)}`, ok: hOk }, { t: hands ? "Manos en el pecho" : "Manos abajo", ok: hands }],
+      segs: [[q.sh, q.hip, hOk], [q.hip, q.kn, kOk], [q.kn, q.an, kOk]], joints: [q.sh, q.hip, q.kn, q.an] };
+    if (q.wr.v >= 0.3) out.joints.push(q.wr);
+    st.phase ??= "idle";
+    if (st.over) {
+      out.phase = "Prueba terminada";
+      out.banner = { text: `Prueba terminada: ${info.okCount} levantadas correctas en ${p.duracion} s (meta: ${p.meta})`, kind: info.okCount >= p.meta ? "ok" : "bad" };
+      return out;
+    }
+    if (st.t0 != null && t - st.t0 >= dur) {
+      st.over = true;
+      if (st.phase === "rise" && st.r.k > 145) out.rep = { rodilla: st.r.k, cadera: st.r.h, manos: st.r.m ? 1 : 0 };
+      return out;
+    }
+    if (st.phase === "idle") {
+      out.phase = seated ? "Sentado: listo" : "Esperando";
+      if (seated) st.phase = "sit"; else out.banner = "Siéntate con los brazos cruzados sobre el pecho";
+      return out;
+    }
+    if (st.phase === "sit") {
+      out.phase = st.t0 == null ? "Sentado: levántate para iniciar" : "Sentado";
+      if (kn > 130) { st.phase = "rise"; st.t0 ??= t; st.r = { k: kn, h: hp, m: hands }; }
+      return out;
+    }
+    const r = st.r; out.phase = "De pie";
+    r.k = Math.max(r.k, kn); r.h = Math.max(r.h, hp); r.m = r.m && hands;
+    if (seated) { st.phase = "sit"; if (r.k > 145) out.rep = { rodilla: r.k, cadera: r.h, manos: r.m ? 1 : 0 }; }
+    return out;
+  }
+},
+{
+  id: "empujar", name: "Empujar o halar", view: "De perfil",
+  unit: "Tramo", units: "Tramos", g: "o",
+  steps: [
+    "Usa una camilla, silla de ruedas o carro.",
+    "Pon la cámara <strong>de lado</strong>, a 2 o 3 metros, con el cuerpo completo y los pies a la vista.",
+    "Toma el objeto con las manos al frente, a la altura de la cintura.",
+    "Empuja o hala. Cada tramo de unos segundos se evalúa por separado."
+  ],
+  basis: "Empujar es más seguro que halar. La técnica correcta mantiene la espalda neutra, los codos ligeramente flexionados y cerca del cuerpo, y una base de apoyo amplia con un pie adelante del otro, para que la fuerza venga de las piernas y no de la espalda.",
+  params: {
+    tronco_max: { label: "Inclinación máxima del tronco", def: 30, min: 15, max: 50, step: 5, f: fDeg },
+    codo_max: { label: "Extensión máxima del codo", def: 165, min: 140, max: 180, step: 5, f: fDeg },
+    base_min: { label: "Separación mínima de los pies", def: 0.35, min: 0.15, max: 0.7, step: 0.05, f: fPct },
+    tramo: { label: "Duración de cada tramo", def: 3, min: 2, max: 8, step: 1, f: (v) => v + " s" }
+  },
+  criteria: [
+    { k: "tronco", label: "Espalda neutra", col: "Tronco", rule: (p) => `Inclinación del tronco ≤ ${fDeg(p.tronco_max)}`, f: fDeg,
+      test: (v, p) => v <= p.tronco_max, tip: (v) => `Endereza la espalda: el tronco se inclinó ${fDeg(v)}. Empuja con las piernas.`, say: "Espalda recta",
+      what: "Inclinación de la línea cadera-hombro respecto a la vertical." },
+    { k: "codo", label: "Codos flexionados", col: "Codo", rule: (p) => `Ángulo del codo ≤ ${fDeg(p.codo_max)}`, f: fDeg,
+      test: (v, p) => v <= p.codo_max, tip: (v) => `Flexiona un poco los codos y mantenlos cerca del cuerpo: llegaron a ${fDeg(v)}.`, say: "Flexiona los codos",
+      what: "Ángulo hombro-codo-muñeca; los brazos bloqueados transmiten la carga a la espalda." },
+    { k: "base", label: "Base de apoyo amplia", col: "Base", rule: (p) => `Pies separados ≥ ${fPct(p.base_min)} de la pierna`, f: fPct,
+      test: (v, p) => v >= p.base_min, tip: (v) => `Separa más los pies, uno adelante del otro: la separación fue ${fPct(v)} del largo de la pierna.`, say: "Separa los pies",
+      what: "Distancia horizontal entre los tobillos, como porcentaje del largo de la pierna." }
+  ],
+  update(F, st, p, t) {
+    const q = sideOf(F, ["sh", "el", "wr", "hip", "an"]);
+    const aL = F.P(27), aR = F.P(28);
+    if (!visible([q.sh, q.el, q.wr, q.hip, q.an])) return { banner: "Aléjate un poco: debe verse el cuerpo completo, de lado" };
+    const L = dist(q.sh, q.hip), leg = dist(q.hip, q.an) || 1;
+    const tr = sm(st, "t", fromVertical(q.hip, q.sh)), el = sm(st, "e", angleAt(q.sh, q.el, q.wr));
+    const base = sm(st, "b", Math.abs(aL.x - aR.x) / leg);
+    const inPos = Math.abs(q.wr.x - q.sh.x) > 0.25 * L && q.wr.y > q.sh.y - 0.1 * L && q.wr.y < q.hip.y + 0.3 * L;
+    const tOk = inPos ? tr <= p.tronco_max : null, eOk = inPos ? el <= p.codo_max : null, bOk = inPos ? base >= p.base_min : null;
+    const out = { chips: [{ t: `Tronco ${fDeg(tr)}`, ok: tOk }, { t: `Codo ${fDeg(el)}`, ok: eOk }, { t: `Base ${fPct(base)}`, ok: bOk }],
+      segs: [[q.hip, q.sh, tOk], [q.sh, q.el, eOk], [q.el, q.wr, eOk], [aL, aR, bOk]], joints: [q.sh, q.el, q.wr, q.hip, aL, aR] };
+    if (!inPos) {
+      st.w = null; out.phase = "Sin agarre";
+      out.banner = "Toma la camilla o la silla con las manos al frente, a la altura de la cintura";
+      return out;
+    }
+    if (!st.w) st.w = { t0: t, tr, el, base };
+    const w = st.w; w.tr = Math.max(w.tr, tr); w.el = Math.max(w.el, el); w.base = Math.min(w.base, base);
+    out.phase = `Tramo en curso ${fSec((t - w.t0) / 1000)}`;
+    if (t - w.t0 >= p.tramo * 1000) { out.rep = { tronco: w.tr, codo: w.el, base: w.base }; st.w = null; }
+    return out;
+  }
+},
+{
+  id: "equilibrio", name: "Equilibrio en un pie", view: "De frente",
+  unit: "Intento", units: "Intentos", g: "o",
+  steps: [
+    "Ponte <strong>de frente</strong> a la cámara, a 2 o 3 metros, con el cuerpo completo a la vista.",
+    "Ten cerca una silla o una pared por seguridad.",
+    "Levanta un pie del suelo y mantén el equilibrio con los brazos relajados.",
+    "Apoya el pie cuando pierdas el equilibrio. Cada intento se evalúa."
+  ],
+  basis: "La prueba de apoyo unipodal valora el equilibrio estático. Mantenerse menos de 5 a 10 segundos se asocia a mayor riesgo de caídas en adultos mayores. La oscilación de la cadera y la inclinación del tronco muestran cuánto compensa la persona para no caer.",
+  params: {
+    tiempo_min: { label: "Tiempo mínimo en un pie", def: 10, min: 3, max: 30, step: 1, f: (v) => v + " s" },
+    osc_max: { label: "Oscilación máxima de la cadera", def: 0.3, min: 0.1, max: 0.6, step: 0.05, f: fPct },
+    tronco_max: { label: "Inclinación lateral máxima", def: 10, min: 5, max: 25, step: 1, f: fDeg }
+  },
+  criteria: [
+    { k: "tiempo", label: "Tiempo en un pie", col: "Tiempo", rule: (p) => `Mantener ≥ ${p.tiempo_min} s`, f: fSec,
+      test: (v, p) => v >= p.tiempo_min, tip: (v, p) => `Intenta mantenerte más tiempo: lograste ${fSec(v)} de ${p.tiempo_min} s.`, say: "Mantén más tiempo",
+      what: "Tiempo desde que se levanta el pie hasta que vuelve a apoyarse (máximo 30 s)." },
+    { k: "osc", label: "Cadera estable", col: "Oscilación", rule: (p) => `Oscilación ≤ ${fPct(p.osc_max)} del ancho de hombros`, f: fPct,
+      test: (v, p) => v <= p.osc_max, tip: (v) => `La cadera se movió mucho de lado a lado (${fPct(v)} del ancho de hombros). Fija la mirada en un punto.`, say: "Estabiliza la cadera",
+      what: "Desplazamiento lateral de la cadera durante el intento." },
+    { k: "tronco", label: "Tronco recto", col: "Tronco", rule: (p) => `Inclinación lateral ≤ ${fDeg(p.tronco_max)}`, f: fDeg,
+      test: (v, p) => v <= p.tronco_max, tip: (v) => `Mantén el tronco recto: se inclinó ${fDeg(v)} hacia un lado.`, say: "Tronco recto",
+      what: "Inclinación lateral de la línea media cadera-hombros." }
+  ],
+  update(F, st, p, t) {
+    const a27 = F.P(27), a28 = F.P(28), h23 = F.P(23), h24 = F.P(24), s11 = F.P(11), s12 = F.P(12);
+    if (!visible([a27, a28, h23, h24, s11, s12], 0.4)) return { banner: "Ponte de frente, con el cuerpo completo a la vista" };
+    const leg = (dist(h23, a27) + dist(h24, a28)) / 2 || 1, sw = dist(s11, s12) || 1;
+    const dy = sm(st, "d", Math.abs(a27.y - a28.y) / leg);
+    const lifted = dy > 0.1, down = dy < 0.05;
+    const hm = mid(h23, h24), smid = mid(s11, s12);
+    const tilt = sm(st, "t", fromVertical(hm, smid));
+    const tOk = tilt <= p.tronco_max;
+    const out = { segs: [[hm, smid, tOk], [h23, a27, null], [h24, a28, null]], joints: [a27, a28, h23, h24, s11, s12] };
+    st.phase ??= "idle";
+    const chips = [{ t: `Tronco ${fDeg(tilt)}`, ok: tOk }];
+    if (st.phase === "hold") {
+      const r = st.r, el = (t - r.t0) / 1000;
+      if (el > 0.5) { r.xmin = Math.min(r.xmin, hm.x); r.xmax = Math.max(r.xmax, hm.x); r.tr = Math.max(r.tr, tilt); }
+      const osc = r.xmax > r.xmin ? (r.xmax - r.xmin) / sw : 0;
+      chips.unshift({ t: `Tiempo ${fSec(el)}`, ok: el >= p.tiempo_min }); chips.push({ t: `Oscilación ${fPct(osc)}`, ok: osc <= p.osc_max });
+      out.chips = chips; out.phase = "En un pie";
+      if (down || el >= 30) {
+        st.phase = down ? "ready" : "wait";
+        if (el >= 1) out.rep = { tiempo: el, osc, tronco: r.tr };
+      }
+      return out;
+    }
+    out.chips = chips;
+    if (st.phase === "idle" || st.phase === "wait") {
+      out.phase = down ? "Dos pies: listo" : "Esperando";
+      if (down) st.phase = "ready"; else out.banner = "Apoya los dos pies para comenzar";
+      return out;
+    }
+    out.phase = "Dos pies: levanta uno";
+    if (lifted) { st.phase = "hold"; st.r = { t0: t, xmin: Infinity, xmax: -Infinity, tr: 0 }; }
+    return out;
+  }
+}
+];
+window.__vp = { EXERCISES };
+
+// =====================================================================
+// CONFIGURACIÓN (hoja de Google o config.csv)
+// =====================================================================
+const cfg = {}, active = {};
+let notice = "", cfgSource = "valores por defecto";
+EXERCISES.forEach((e) => { cfg[e.id] = {}; for (const k in e.params) cfg[e.id][k] = e.params[k].def; active[e.id] = true; });
+
+function parseCSV(s) {
+  const rows = []; let row = [], f = "", q = false;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (q) { if (c === '"') { if (s[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === ",") { row.push(f); f = ""; }
+    else if (c === "\n") { row.push(f); rows.push(row); row = []; f = ""; }
+    else if (c !== "\r") f += c;
+  }
+  if (f || row.length) { row.push(f); rows.push(row); }
+  return rows;
+}
+const truthy = (v) => ["true", "verdadero", "si", "sí", "1", "x", "activo"].includes(String(v).trim().toLowerCase());
+function applyCSV(text) {
+  let known = 0;
+  for (const [rawKey, rawVal = ""] of parseCSV(text)) {
+    const key = (rawKey || "").trim().toLowerCase(), val = rawVal.trim();
+    if (!key || key === "clave") continue;
+    if (key === "mensaje") { notice = val; known++; continue; }
+    const [id, param] = key.split(".");
+    if (!cfg[id]) continue;
+    if (param === "activo") { active[id] = truthy(val); known++; }
+    else if (param in cfg[id]) { const n = parseFloat(val.replace(",", ".")); if (Number.isFinite(n)) { cfg[id][param] = n; known++; } }
+  }
+  return known > 0;
+}
+async function loadConfig() {
+  const bust = (u) => u + (u.includes("?") ? "&" : "?") + "_=" + Date.now();
+  const sources = [];
+  if (CONFIG_URL) sources.push([CONFIG_URL, "hoja de Google"]);
+  sources.push(["config.csv", "archivo config.csv"]);
+  for (const [u, name] of sources) {
+    try {
+      const r = await fetch(bust(u), { cache: "no-store" });
+      if (r.ok && applyCSV(await r.text())) { cfgSource = name; return; }
+    } catch {}
+  }
+}
+
+// =====================================================================
+// ESTADO DE LA SESIÓN E INTERFAZ
+// =====================================================================
+let EX = null, P = null, st = {}, reps = [];
+let landmarker = null, stream = null, mode = null, running = false, lastVideoTime = -1, facing = "user", wakeLock = null;
+
+function renderMenu() {
+  const list = EXERCISES.filter((e) => DOCENTE || active[e.id]);
+  const bar = $("exbar");
+  if (!list.length) {
+    bar.innerHTML = '<span class="noex">El docente todavía no ha activado ningún ejercicio.</span>';
+    $("btnCam").disabled = true; $("fileIn").disabled = true; return null;
+  }
+  bar.innerHTML = list.map((e) => `<button class="exbtn${active[e.id] ? "" : " off"}" data-id="${e.id}" aria-pressed="false"><strong>${e.name}</strong><span>${e.view}${active[e.id] ? "" : " · inactivo para estudiantes"}</span></button>`).join("");
+  bar.querySelectorAll(".exbtn").forEach((b) => (b.onclick = () => selectExercise(b.dataset.id)));
+  let saved = null; try { saved = localStorage.getItem("vp.ex"); } catch {}
+  return list.find((e) => e.id === saved) || list[0];
+}
+
+function selectExercise(id) {
+  EX = EXERCISES.find((e) => e.id === id); P = cfg[id];
+  try { localStorage.setItem("vp.ex", id); } catch {}
+  $("exbar").querySelectorAll(".exbtn").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.id === id)));
+  $("lblTotal").textContent = EX.units;
+  $("phText").innerHTML = `Activa la cámara o sube un video. Colócate <strong>${EX.view.toLowerCase()}</strong> a la cámara.`;
+  $("gSteps").innerHTML = EX.steps.map((s) => `<li>${s}</li>`).join("");
+  $("gBasis").textContent = EX.basis;
+  renderRules();
+  $("histHead").innerHTML = `<tr><th>#</th>${EX.criteria.map((c) => `<th>${c.col}</th>`).join("")}<th>Resultado</th></tr>`;
+  if (DOCENTE) renderSliders();
+  resetSession();
+}
+
+function renderRules() {
+  $("critList").innerHTML = EX.criteria.map((c) => `<li><span class="dot" id="d_${c.k}"></span><span class="lbl">${c.label}<span class="rule">${c.rule(P)}</span></span><span class="val" id="v_${c.k}">—</span></li>`).join("");
+  $("gEval").innerHTML = EX.criteria.map((c) => `<li><strong>${c.label}:</strong> ${c.what} Criterio: ${c.rule(P)}.</li>`).join("");
+}
+
+function renderSliders() {
+  $("sliders").innerHTML = Object.entries(EX.params).map(([k, d]) => `
+    <div class="slider"><label for="s_${k}">${d.label} <output id="o_${k}">${d.f(P[k])}</output></label>
+    <input type="range" id="s_${k}" min="${d.min}" max="${d.max}" step="${d.step}" value="${P[k]}"></div>`).join("");
+  Object.entries(EX.params).forEach(([k, d]) => {
+    $("s_" + k).oninput = (e) => { P[k] = parseFloat(e.target.value); $("o_" + k).textContent = d.f(P[k]); renderRules(); };
+  });
+}
+
+function resetSession() {
+  reps = []; st = {}; renderHistory();
+  $("last").className = "last";
+  $("last").innerHTML = `<strong>Esperando ${EX.g === "a" ? "la primera" : "el primer"} ${EX.unit.toLowerCase()}</strong><p>Sigue las instrucciones de "Cómo grabarse" más abajo.</p>`;
+}
+
+function finishRep(vals) {
+  const items = EX.criteria.map((c) => { const v = vals[c.k]; return { c, v, ok: c.test(v, P) }; });
+  const rep = { n: reps.length + 1, items, ok: items.every((i) => i.ok) };
+  reps.push(rep);
+  items.forEach((i) => { $("d_" + i.c.k).className = "dot " + (i.ok ? "ok" : "bad"); $("v_" + i.c.k).textContent = i.c.f(i.v); });
+  const last = $("last"), word = rep.ok ? (EX.g === "a" ? "correcta" : "correcto") : "por corregir";
+  last.className = "last " + (rep.ok ? "ok" : "bad");
+  const bad = items.filter((i) => !i.ok);
+  last.innerHTML = `<strong>${EX.unit} ${rep.n}: ${word}</strong>` + (rep.ok ? "<p>Cumple todos los criterios.</p>" : `<ul>${bad.map((i) => `<li>${i.c.tip(i.v, P)}</li>`).join("")}</ul>`);
+  renderHistory();
+  beep(rep.ok);
+  showBanner(`${EX.unit} ${rep.n}: ${word}`, rep.ok ? "ok" : "bad", EX.quiet ? 700 : 2200);
+  if (rep.ok) { if (!EX.quiet) say(EX.g === "a" ? "Correcta" : "Correcto"); }
+  else { const b = bad[0]; say(typeof b.c.say === "function" ? b.c.say(b.v, P) : b.c.say); }
+}
+
+function renderHistory() {
+  const ok = reps.filter((r) => r.ok).length;
+  $("nTotal").textContent = reps.length; $("nOk").textContent = ok; $("nBad").textContent = reps.length - ok;
+  $("histEmpty").hidden = reps.length > 0;
+  $("histBody").innerHTML = reps.slice(-200).reverse().map((r) => `<tr><td>${r.n}</td>${r.items.map((i) => `<td class="${i.ok ? "okc" : "badc"}">${i.c.f(i.v)}</td>`).join("")}<td class="${r.ok ? "okc" : "badc"}">${r.ok ? "Correcta" : "Incorrecta"}</td></tr>`).join("");
+  if (!reps.length) EX.criteria.forEach((c) => { const d = $("d_" + c.k); if (d) { d.className = "dot"; $("v_" + c.k).textContent = "—"; } });
+}
+
+// ---------- modelo ----------
+async function loadModel() {
+  try {
+    const fileset = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+    const opts = (delegate) => ({
+      baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task", delegate },
+      runningMode: "VIDEO", numPoses: 1
+    });
+    try { landmarker = await PoseLandmarker.createFromOptions(fileset, opts("GPU")); }
+    catch { landmarker = await PoseLandmarker.createFromOptions(fileset, opts("CPU")); }
+    if (EX) { $("btnCam").disabled = false; $("fileIn").disabled = false; }
+    setStatus("Modelo listo. Activa la cámara o sube un video.");
+  } catch (e) {
+    console.error(e);
+    setStatus("No se pudo cargar el modelo. Revisa la conexión a internet y recarga la página.");
+  }
+}
+function setStatus(t) { $("status").textContent = t; }
+
+// ---------- fuentes de video ----------
+async function startCamera() {
+  stopAll();
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+  } catch {
+    setStatus("No se pudo abrir la cámara. Da permiso en el navegador o sube un video grabado.");
+    return;
+  }
+  video.srcObject = stream; video.controls = false; mode = "camera";
+  applyMirror();
+  await video.play();
+  $("btnFlip").hidden = false;
+  begin(`Cámara activa. Colócate ${EX.view.toLowerCase()}.`);
+  try { wakeLock = await navigator.wakeLock?.request("screen"); } catch {}
+}
+$("btnCam").onclick = startCamera;
+$("btnFlip").onclick = () => { facing = facing === "user" ? "environment" : "user"; startCamera(); };
+$("fileIn").onchange = async (ev) => {
+  const f = ev.target.files[0]; if (!f) return;
+  stopAll();
+  video.src = URL.createObjectURL(f); video.controls = true; mode = "file"; applyMirror();
+  resetSession();
+  video.onended = () => setStatus("Video analizado. Revisa el resultado.");
+  await video.play().catch(() => {});
+  begin("Analizando el video…");
+  ev.target.value = "";
+};
+$("btnStop").onclick = () => { stopAll(); setStatus("Detenido."); };
+$("btnReset").onclick = resetSession;
+$("cMirror").onchange = applyMirror;
+function applyMirror() { stage.classList.toggle("mirror", mode === "camera" && facing === "user" && $("cMirror").checked); }
+video.addEventListener("loadedmetadata", () => { if (video.videoWidth) stage.style.aspectRatio = `${video.videoWidth} / ${video.videoHeight}`; });
+
+function begin(msg) {
+  $("placeholder").hidden = true; $("hud").hidden = false; $("btnStop").disabled = false;
+  running = true; lastVideoTime = -1; st = {};
+  setStatus(msg);
+  requestAnimationFrame(loop);
+}
+function stopAll() {
+  running = false;
+  if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; }
+  try { wakeLock?.release(); } catch {} wakeLock = null;
+  video.pause();
+  if (video.src && video.src.startsWith("blob:")) URL.revokeObjectURL(video.src);
+  video.removeAttribute("src"); video.srcObject = null; video.load();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  stage.style.aspectRatio = "";
+  $("btnStop").disabled = true; $("btnFlip").hidden = true; $("hud").hidden = true; $("banner").hidden = true;
+  $("placeholder").hidden = false; mode = null; applyMirror();
+}
+
+// ---------- bucle ----------
+function loop() {
+  if (!running) return;
+  if (video.readyState >= 2 && video.currentTime !== lastVideoTime && landmarker) {
+    lastVideoTime = video.currentTime;
+    if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) { canvas.width = video.videoWidth; canvas.height = video.videoHeight; }
+    const t = mode === "file" ? video.currentTime * 1000 : performance.now();
+    process(landmarker.detectForVideo(video, performance.now()), t);
+  }
+  requestAnimationFrame(loop);
+}
+
+function process(res, t) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const lm = res.landmarks && res.landmarks[0];
+  if (!lm) { setChips([], null); showBanner("No se detecta a ninguna persona"); return; }
+  const W = canvas.width, H = canvas.height;
+  const F = { P: (i) => ({ x: lm[i].x * W, y: lm[i].y * H, v: lm[i].visibility ?? 1 }), v: (i) => lm[i].visibility ?? 1 };
+  drawAll(lm, W, H);
+  const out = EX.update(F, st, P, t, { okCount: reps.filter((r) => r.ok).length }) || {};
+  const lw = Math.max(4, W / 150);
+  (out.segs || []).forEach(([a, b, ok]) => seg(a, b, ok === true ? "#2fd47a" : ok === false ? "#ff5a4f" : "#e7f1f3", lw));
+  (out.joints || []).forEach((p) => dot(p, lw * 1.1, "#ffffff"));
+  setChips(out.chips || [], out.phase);
+  if (out.banner) { const b = typeof out.banner === "string" ? { text: out.banner } : out.banner; showBanner(b.text, b.kind); } else hideBanner();
+  if (out.rep) finishRep(out.rep);
+}
+
+function setChips(chips, phase) {
+  $("hud").innerHTML = (phase ? `<span class="chip phase">${phase}</span>` : "") +
+    chips.map((c) => `<span class="chip${c.ok === true ? " ok" : c.ok === false ? " bad" : ""}">${c.t}</span>`).join("");
+}
+let bannerTimer = null, bannerLocked = false;
+function showBanner(text, kind, ms) {
+  if (bannerLocked && !ms) return;
+  const b = $("banner"); b.textContent = text; b.className = "banner " + (kind || ""); b.hidden = false;
+  if (ms) { bannerLocked = true; clearTimeout(bannerTimer); bannerTimer = setTimeout(() => { bannerLocked = false; b.hidden = true; }, ms); }
+}
+function hideBanner() { if (!bannerLocked) $("banner").hidden = true; }
+
+// ---------- dibujo ----------
+function seg(a, b, color, w) { ctx.strokeStyle = color; ctx.lineWidth = w; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
+function dot(p, r, color) { ctx.fillStyle = color; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill(); }
+const BONES = [[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[27,31],[28,32]];
+function drawAll(lm, W, H) {
+  ctx.globalAlpha = 0.5;
+  BONES.forEach(([a, b]) => {
+    if ((lm[a].visibility ?? 1) > 0.4 && (lm[b].visibility ?? 1) > 0.4) seg({ x: lm[a].x * W, y: lm[a].y * H }, { x: lm[b].x * W, y: lm[b].y * H }, "#9fd9e2", Math.max(2, W / 320));
+  });
+  ctx.globalAlpha = 1;
+}
+
+// ---------- sonido y voz ----------
+let actx = null, lastSay = 0;
+function beep(ok) {
+  if (!$("cSound").checked) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain(), len = EX.quiet ? 0.12 : 0.35;
+    o.frequency.value = ok ? 880 : 220; o.type = ok ? "sine" : "square";
+    g.gain.setValueAtTime(0.15, actx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + len);
+    o.connect(g).connect(actx.destination); o.start(); o.stop(actx.currentTime + len);
+  } catch {}
+}
+function say(text) {
+  if (!$("cVoice").checked || !("speechSynthesis" in window)) return;
+  const now = Date.now(); if (now - lastSay < (EX.quiet ? 4000 : 1500)) return; lastSay = now;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = "es-ES"; u.rate = 1.05; speechSynthesis.speak(u); } catch {}
+}
+
+// ---------- copiar resumen ----------
+$("btnCopy").onclick = async () => {
+  const ok = reps.filter((r) => r.ok).length, pct = reps.length ? Math.round(ok / reps.length * 100) : 0;
+  const lines = [
+    `Validador de Mecánica Corporal: ${EX.name}`,
+    `Fecha: ${new Date().toLocaleString("es")}`,
+    `Criterios: ${EX.criteria.map((c) => c.rule(P)).join("; ")}`,
+    `${EX.units}: ${reps.length} | Correctas: ${ok} | Incorrectas: ${reps.length - ok} | Ejecución correcta: ${pct}%`,
+    ...reps.map((r) => `#${r.n}: ${r.items.map((i) => `${i.c.col.toLowerCase()} ${i.c.f(i.v)}`).join(", ")} → ${r.ok ? "Correcta" : "Incorrecta"}`)
+  ];
+  try { await navigator.clipboard.writeText(lines.join("\n")); $("copyMsg").textContent = "Resumen copiado. Pégalo en WhatsApp o en un correo."; }
+  catch { $("copyMsg").textContent = "No se pudo copiar automáticamente."; }
+};
+
+// ---------- inicio ----------
+if (DOCENTE) { $("teacherBadge").hidden = false; $("teacher").hidden = false; }
+loadModel();
+await loadConfig();
+if (notice) { $("notice").textContent = notice; $("notice").hidden = false; }
+$("cfgSource").textContent = `Configuración cargada desde: ${cfgSource}.`;
+const first = renderMenu();
+if (first) { selectExercise(first.id); if (landmarker) { $("btnCam").disabled = false; $("fileIn").disabled = false; } }
+</script>
+</body>
+</html>
