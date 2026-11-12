@@ -35,6 +35,26 @@ la versión publicada cada pocos minutos. El estudiante solo necesita recargar l
 
 No cambies los textos de la columna **clave**: la página los usa para reconocer cada ajuste.
 
+## 4. Recibir los resultados de los estudiantes (una sola vez)
+
+Cada estudiante escribe su nombre y grupo, hace el ejercicio y pulsa **Enviar al docente**.
+El resultado llega a una pestaña **Resultados** de tu hoja, que se crea sola con el primer envío.
+
+1. En tu hoja, ve a **Extensiones → Apps Script**.
+2. Borra el código que aparece y pega el contenido de `apps-script/Codigo.gs`. Pulsa **Guardar** (ícono de disco).
+3. Pulsa **Implementar → Nueva implementación**. En el engranaje de "Seleccionar tipo", elige **Aplicación web**.
+   - Ejecutar como: **Yo**
+   - Quién tiene acceso: **Cualquier usuario**
+4. Pulsa **Implementar** y luego **Autorizar acceso**. Elige tu cuenta. Si aparece "Google no verificó esta app",
+   pulsa **Configuración avanzada → Ir a … (no seguro)** y luego **Permitir**. Es tu propio script.
+5. Copia la **URL de la aplicación web**, que termina en `/exec`.
+6. En la hoja de configuración, agrega una fila con `resultados_url` en la columna **clave** y esa URL en **valor**.
+
+Cada fila de Resultados guarda: fecha, nombre, grupo, ejercicio, total, correctas, incorrectas,
+porcentaje, el criterio que más falló, el detalle por criterio y si se usó cámara o video.
+
+Para dejar de recibir resultados, borra el valor de `resultados_url`.
+
 ## Vista docente
 
 Agrega `?docente` al final del enlace de la página (por ejemplo `https://.../index.html?docente`) para:

@@ -153,6 +153,14 @@ summary { cursor: pointer; font-weight: 700; }
 input[type=range] { width: 100%; accent-color: var(--accent); }
 .toggle { display: flex; gap: 8px; align-items: center; margin-top: 8px; font-size: .92rem; }
 .note { font-size: .82rem; color: var(--muted); margin: 8px 0 0; }
+.student { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
+@media (max-width: 420px) { .student { grid-template-columns: 1fr; } }
+.field { display: grid; gap: 4px; font-size: .85rem; font-weight: 700; min-width: 0; }
+.field input { font: inherit; font-weight: 400; padding: 9px 11px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); width: 100%; }
+.field input:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+.field.missing input { border-color: var(--bad); }
+.msg-ok { color: var(--ok); font-weight: 700; }
+.msg-bad { color: var(--bad); font-weight: 700; }
 
 .guide { margin-top: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
 .guide .panel p, .guide .panel li { color: var(--muted); font-size: .93rem; }
@@ -205,6 +213,14 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     </section>
 
     <aside class="stack">
+      <div class="panel" id="studentPanel" hidden>
+        <h2>Tus datos</h2>
+        <div class="student">
+          <label class="field" id="fName">Nombre completo<input id="stName" type="text" autocomplete="name" maxlength="80" placeholder="Ej. Ana María Pérez"></label>
+          <label class="field">Grupo<input id="stGroup" type="text" maxlength="30" placeholder="Ej. 3A"></label>
+        </div>
+        <p class="note">Al terminar, pulsa "Enviar al docente" para que tu resultado quede registrado.</p>
+      </div>
       <div class="panel">
         <h2 id="scoreTitle">Resultado de la sesión</h2>
         <div class="score">
@@ -230,8 +246,9 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
           <div class="empty" id="histEmpty">Aún no hay registros.</div>
         </div>
         <div class="controls">
+          <button class="primary" id="btnSend" hidden>Enviar al docente</button>
           <button id="btnCopy">Copiar resumen</button>
-          <span class="status" id="copyMsg"></span>
+          <span class="status" id="copyMsg" role="status"></span>
         </div>
         <details>
           <summary>Opciones</summary>
@@ -667,7 +684,7 @@ window.__vp = { EXERCISES };
 // CONFIGURACIÓN (hoja de Google o config.csv)
 // =====================================================================
 const cfg = {}, active = {};
-let notice = "", cfgSource = "valores por defecto";
+let notice = "", cfgSource = "valores por defecto", resultsUrl = "";
 EXERCISES.forEach((e) => { cfg[e.id] = {}; for (const k in e.params) cfg[e.id][k] = e.params[k].def; active[e.id] = true; });
 
 function parseCSV(s) {
@@ -690,6 +707,7 @@ function applyCSV(text) {
     const key = (rawKey || "").trim().toLowerCase(), val = rawVal.trim();
     if (!key || key === "clave") continue;
     if (key === "mensaje") { notice = val; known++; continue; }
+    if (key === "resultados_url") { if (/^https:\/\/script\.google\.com\//.test(val)) resultsUrl = val; known++; continue; }
     const [id, param] = key.split(".");
     if (!cfg[id]) continue;
     if (param === "activo") { active[id] = truthy(val); known++; }
@@ -714,6 +732,7 @@ async function loadConfig() {
 // ESTADO DE LA SESIÓN E INTERFAZ
 // =====================================================================
 let EX = null, P = null, st = {}, reps = [];
+let lastSource = "";
 let landmarker = null, stream = null, mode = null, running = false, lastVideoTime = -1, facing = "user", wakeLock = null;
 
 function renderMenu() {
@@ -815,7 +834,7 @@ async function startCamera() {
     setStatus("No se pudo abrir la cámara. Da permiso en el navegador o sube un video grabado.");
     return;
   }
-  video.srcObject = stream; video.controls = false; mode = "camera";
+  video.srcObject = stream; video.controls = false; mode = "camera"; lastSource = "Cámara";
   applyMirror();
   await video.play();
   $("btnFlip").hidden = false;
@@ -827,7 +846,7 @@ $("btnFlip").onclick = () => { facing = facing === "user" ? "environment" : "use
 $("fileIn").onchange = async (ev) => {
   const f = ev.target.files[0]; if (!f) return;
   stopAll();
-  video.src = URL.createObjectURL(f); video.controls = true; mode = "file"; applyMirror();
+  video.src = URL.createObjectURL(f); video.controls = true; mode = "file"; lastSource = "Video"; applyMirror();
   resetSession();
   video.onended = () => setStatus("Video analizado. Revisa el resultado.");
   await video.play().catch(() => {});
@@ -943,12 +962,52 @@ $("btnCopy").onclick = async () => {
   catch { $("copyMsg").textContent = "No se pudo copiar automáticamente."; }
 };
 
+// ---------- enviar resultado al docente ----------
+function setMsg(text, cls) { const m = $("copyMsg"); m.textContent = text; m.className = "status " + (cls || ""); }
+function loadStudent() {
+  try { $("stName").value = localStorage.getItem("vp.name") || ""; $("stGroup").value = localStorage.getItem("vp.group") || ""; } catch {}
+}
+["stName", "stGroup"].forEach((id) => $(id).addEventListener("input", () => {
+  try { localStorage.setItem(id === "stName" ? "vp.name" : "vp.group", $(id).value.trim()); } catch {}
+  if (id === "stName") $("fName").classList.remove("missing");
+}));
+$("btnSend").onclick = async () => {
+  const nombre = $("stName").value.trim(), grupo = $("stGroup").value.trim();
+  if (nombre.length < 3) { $("fName").classList.add("missing"); $("stName").focus(); setMsg("Escribe tu nombre completo arriba para enviar.", "msg-bad"); return; }
+  if (!reps.length) { setMsg(`Aún no hay ${EX.units.toLowerCase()} para enviar.`, "msg-bad"); return; }
+  const ok = reps.filter((r) => r.ok).length;
+  const fails = EX.criteria.map((c) => ({ c, n: reps.filter((r) => r.items.find((i) => i.c === c && !i.ok)).length }));
+  const worst = fails.reduce((a, b) => (b.n > a.n ? b : a));
+  const data = {
+    nombre, grupo, ejercicio: EX.name,
+    total: reps.length, correctas: ok, incorrectas: reps.length - ok,
+    porcentaje: Math.round(ok / reps.length * 100),
+    falla: worst.n ? worst.c.label : "Ninguno",
+    detalle: fails.map((f) => `${f.c.label}: ${f.n}/${reps.length} fallas`).join("; "),
+    fuente: lastSource
+  };
+  const btn = $("btnSend"); btn.disabled = true; setMsg("Enviando…");
+  const body = JSON.stringify(data);
+  let sent = false;
+  try {
+    const r = await fetch(resultsUrl, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body });
+    const j = await r.json().catch(() => ({}));
+    sent = r.ok && j.ok !== false;
+  } catch {
+    try { await fetch(resultsUrl, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body }); sent = true; } catch {}
+  }
+  btn.disabled = false;
+  if (sent) { resetSession(); setMsg(`Enviado: ${data.correctas} de ${data.total} correctas (${data.porcentaje} %). Puedes hacer otro intento.`, "msg-ok"); }
+  else setMsg("No se pudo enviar. Revisa tu conexión e inténtalo de nuevo, o usa Copiar resumen.", "msg-bad");
+};
+
 // ---------- inicio ----------
 if (DOCENTE) { $("teacherBadge").hidden = false; $("teacher").hidden = false; }
 loadModel();
 await loadConfig();
 if (notice) { $("notice").textContent = notice; $("notice").hidden = false; }
-$("cfgSource").textContent = `Configuración cargada desde: ${cfgSource}.`;
+$("cfgSource").textContent = `Configuración cargada desde: ${cfgSource}. Envío de resultados: ${resultsUrl ? "activo" : "no configurado"}.`;
+if (resultsUrl) { $("studentPanel").hidden = false; $("btnSend").hidden = false; loadStudent(); }
 const first = renderMenu();
 if (first) { selectExercise(first.id); if (landmarker) { $("btnCam").disabled = false; $("fileIn").disabled = false; } }
 </script>
