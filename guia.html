@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Guía de Ejercicios del Validador</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: ficha clínica por ejercicio — figuras correcto/incorrecto arriba, pasos y errores en dos columnas, tabla de criterios al pie */
+:root {
+  --bg: #f3f6f7;
+  --surface: #ffffff;
+  --ink: #12262e;
+  --muted: #5a6f77;
+  --line: #d6e0e3;
+  --accent: #0f7c8c;
+  --accent-ink: #ffffff;
+  --accent-soft: #dff0f2;
+  --ok: #1d8a4e;
+  --ok-soft: #e2f4ea;
+  --bad: #c2362f;
+  --bad-soft: #fbe6e4;
+  --prop: #8aa0a7;
+  --f-display: "Archivo", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1a1f; --surface: #14252b; --ink: #e3eef1; --muted: #93a8af; --line: #24393f;
+    --accent: #3fb8c8; --accent-ink: #062027; --accent-soft: #123138; --ok: #4cc882; --ok-soft: #133526;
+    --bad: #ff7a70; --bad-soft: #3d1c1a; --prop: #5d7279; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1a1f; --surface: #14252b; --ink: #e3eef1; --muted: #93a8af; --line: #24393f;
+  --accent: #3fb8c8; --accent-ink: #062027; --accent-soft: #123138; --ok: #4cc882; --ok-soft: #133526;
+  --bad: #ff7a70; --bad-soft: #3d1c1a; --prop: #5d7279; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.55; }
+.wrap {
+  max-width: 1080px; margin: 0 auto;
+  padding-block: 24px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.eyebrow { font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(1.6rem, 3.6vw, 2.4rem); line-height: 1.1; margin: 4px 0 8px; text-wrap: balance; }
+h2 { font-family: var(--f-display); font-weight: 800; font-size: clamp(1.3rem, 2.6vw, 1.7rem); margin: 0; line-height: 1.15; text-wrap: balance; }
+h3 { font-family: var(--f-display); font-weight: 700; font-size: 1rem; margin: 0 0 8px; }
+.lead { color: var(--muted); max-width: 66ch; margin: 0; }
+a { color: var(--accent); }
+
+.tips { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 20px 0; }
+.tip { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font-size: .93rem; }
+.tip strong { display: block; font-family: var(--f-display); margin-bottom: 2px; }
+.tip span { color: var(--muted); }
+
+nav.toc { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 10px; display: flex; gap: 8px; overflow-x: auto; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+nav.toc a { flex: 0 0 auto; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: .88rem; font-weight: 700; }
+nav.toc a:hover, nav.toc a:focus-visible { border-color: var(--accent); color: var(--accent); outline: none; }
+
+section.ex { padding-top: 28px; scroll-margin-top: 64px; }
+.ex-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 14px; margin-bottom: 6px; }
+.view { font-family: var(--f-mono); font-size: .78rem; border: 1px solid var(--accent); color: var(--accent); border-radius: 999px; padding: 2px 10px; white-space: nowrap; }
+.purpose { color: var(--muted); margin: 0 0 14px; max-width: 70ch; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: grid; gap: 18px; }
+.figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+figure { margin: 0; border-radius: 12px; padding: 10px 10px 12px; display: grid; gap: 6px; }
+figure.ok { background: var(--ok-soft); }
+figure.bad { background: var(--bad-soft); }
+figure svg { width: 100%; height: auto; max-height: 230px; display: block; }
+figcaption { font-size: .88rem; }
+figcaption b { display: block; font-family: var(--f-display); }
+figure.ok figcaption b { color: var(--ok); }
+figure.bad figcaption b { color: var(--bad); }
+
+.limb { fill: none; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+.ok .limb { stroke: var(--ok); }
+.bad .limb { stroke: var(--bad); }
+.headc { stroke-width: 0; }
+.ok .headc { fill: var(--ok); }
+.bad .headc { fill: var(--bad); }
+.prop { fill: none; stroke: var(--prop); stroke-width: 3; stroke-linejoin: round; }
+.propf { fill: var(--prop); opacity: .35; }
+.ground { stroke: var(--prop); stroke-width: 2; }
+.guide { fill: none; stroke-width: 2; stroke-dasharray: 5 5; }
+.ok .guide { stroke: var(--ok); }
+.bad .guide { stroke: var(--bad); }
+.lbl { font-family: var(--f-mono); font-size: 11px; }
+.ok .lbl { fill: var(--ok); }
+.bad .lbl { fill: var(--bad); }
+
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+.cols ol, .cols ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.cols li { min-width: 0; }
+.errors li::marker { color: var(--bad); }
+
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); background: var(--bg); }
+td.num, td code { font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td code { font-size: .8rem; color: var(--muted); }
+.note { font-size: .86rem; color: var(--muted); margin: 0; }
+
+footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: .88rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Enfermería · Laboratorio de movimiento</div>
+    <h1>Guía de Ejercicios del Validador</h1>
+    <p class="lead">Cómo se realiza cada ejercicio, qué errores son los más comunes y qué mide la aplicación para decidir si la ejecución es correcta. Las figuras en verde muestran la técnica esperada; las rojas, el error típico.</p>
+  </header>
+
+  <div class="tips">
+    <div class="tip"><strong>Cuerpo completo</strong><span>La cámara debe ver de la cabeza a los pies. A 2 o 3 metros suele bastar.</span></div>
+    <div class="tip"><strong>Posición correcta</strong><span>Cada ejercicio indica si va de perfil o de frente. Es lo que más influye en la medición.</span></div>
+    <div class="tip"><strong>Buena luz y fondo despejado</strong><span>Evita contraluces y ropa muy holgada que oculte rodillas y codos.</span></div>
+    <div class="tip"><strong>Celular fijo</strong><span>Apóyalo a la altura de la cadera, o que un compañero grabe con la cámara trasera.</span></div>
+  </div>
+
+  <nav class="toc" aria-label="Ejercicios">
+    <a href="#levantamiento">Levantamiento de carga</a>
+    <a href="#rcp">RCP</a>
+    <a href="#hombro">Abducción de hombro</a>
+    <a href="#silla">Sentarse y levantarse</a>
+    <a href="#empujar">Empujar o halar</a>
+    <a href="#equilibrio">Equilibrio en un pie</a>
+  </nav>
+
+  <!-- ============ LEVANTAMIENTO ============ -->
+  <section class="ex" id="levantamiento">
+    <div class="ex-head"><h2>Levantamiento de carga</h2><span class="view">De perfil</span></div>
+    <p class="purpose">Levantar un objeto desde el suelo protegiendo la columna lumbar. Es la base de la mecánica corporal en enfermería: el mismo principio se aplica al movilizar pacientes, cajas de insumos o equipos.</p>
+    <div class="card">
+      <div class="figs">
+        <figure class="ok">
+          <svg viewBox="0 0 200 215" aria-label="Figura agachada con rodillas flexionadas y espalda recta tomando una caja">
+            <line class="ground" x1="10" y1="200" x2="190" y2="200"/>
+            <rect class="prop" x="128" y="162" width="40" height="38" rx="3"/>
+            <polyline class="limb" points="124,200 100,200 132,158 88,142"/>
+            <polyline class="limb" points="88,142 104,92"/>
+            <polyline class="limb" points="104,92 120,126 132,160"/>
+            <circle class="headc" cx="110" cy="74" r="12"/>
+            <line class="guide" x1="88" y1="142" x2="88" y2="60"/>
+            <text class="lbl" x="58" y="70">≤ 45°</text>
+            <text class="lbl" x="140" y="150">≤ 120°</text>
+          </svg>
+          <figcaption><b>Correcto: en cuclillas</b>Rodillas flexionadas, espalda recta, la carga cerca del cuerpo.</figcaption>
+        </figure>
+        <figure class="bad">
+          <svg viewBox="0 0 200 215" aria-label="Figura con piernas rectas y espalda doblada hacia la caja">
+            <line class="ground" x1="10" y1="200" x2="190" y2="200"/>
+            <rect class="prop" x="138" y="170" width="40" height="30" rx="3"/>
+            <polyline class="limb" points="124,200 100,200 104,152 98,106"/>
+            <polyline class="limb" points="98,106 150,118"/>
+            <polyline class="limb" points="150,118 152,148 154,172"/>
+            <circle class="headc" cx="168" cy="124" r="12"/>
+            <line class="guide" x1="98" y1="106" x2="98" y2="40"/>
+            <text class="lbl" x="104" y="60">≈ 80°</text>
+          </svg>
+          <figcaption><b>Incorrecto: espalda doblada</b>Piernas casi rectas y tronco horizontal: toda la carga va a la zona lumbar.</figcaption>
+        </figure>
+      </div>
+      <div class="cols">
+        <div>
+          <h3>Cómo se hace</h3>
+          <ol>
+            <li>Párate frente a la carga con los pies separados al ancho de los hombros.</li>
+            <li>Acércate lo más posible al objeto.</li>
+            <li>Baja flexionando caderas y rodillas, con la espalda recta y el pecho erguido.</li>
+            <li>Toma la carga firmemente y pégala al cuerpo.</li>
+            <li>Sube extendiendo las piernas, sin girar el tronco.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>Errores frecuentes</h3>
+          <ul class="errors">
+            <li>Agacharse doblando la espalda con las piernas rectas.</li>
+            <li>Bajar de golpe, sin control.</li>
+            <li>Levantar con la carga lejos del cuerpo.</li>
+            <li>Girar el tronco mientras se levanta.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Criterio</th><th>Qué mide la app</th><th>Valor por defecto</th><th>Clave en la hoja</th></tr></thead>
+        <tbody>
+          <tr><td>Rodillas flexionadas</td><td>Ángulo cadera-rodilla-tobillo en el punto más bajo (180° = pierna recta)</td><td class="num">≤ 120°</td><td><code>levantamiento.rodilla_max</code></td></tr>
+          <tr><td>Espalda recta</td><td>Inclinación de la línea cadera-hombro respecto a la vertical</td><td class="num">≤ 45°</td><td><code>levantamiento.tronco_max</code></td></tr>
+          <tr><td>Descenso controlado</td><td>Tiempo desde que empieza a bajar hasta el punto más bajo</td><td class="num">≥ 0,7 s</td><td><code>levantamiento.bajada_min</code></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- ============ RCP ============ -->
+  <section class="ex" id="rcp">
+    <div class="ex-head"><h2>RCP: compresiones torácicas</h2><span class="view">De perfil</span></div>
+    <p class="purpose">Compresiones de calidad en la reanimación cardiopulmonar: brazos rectos, hombros sobre las manos y un ritmo de 100 a 120 por minuto, usando el peso del cuerpo y no la fuerza de los brazos.</p>
+    <div class="card">
+      <div class="figs">
+        <figure class="ok">
+          <svg viewBox="0 0 220 215" aria-label="Figura arrodillada con brazos rectos y hombros sobre las manos">
+            <line class="ground" x1="10" y1="200" x2="210" y2="200"/>
+            <rect class="propf" x="100" y="180" width="92" height="20" rx="8"/>
+            <circle class="propf" cx="203" cy="188" r="10"/>
+            <polyline class="limb" points="32,197 78,197 86,148"/>
+            <polyline class="limb" points="86,148 122,96"/>
+            <polyline class="limb" points="122,96 122,138 122,178"/>
+            <circle class="headc" cx="134" cy="80" r="12"/>
+            <line class="guide" x1="122" y1="70" x2="122" y2="182"/>
+            <text class="lbl" x="128" y="140">codo ≥ 160°</text>
+          </svg>
+          <figcaption><b>Correcto: hombros sobre las manos</b>Brazos bloqueados, línea vertical hombro-mano, compresión con el peso del tronco.</figcaption>
+        </figure>
+        <figure class="bad">
+          <svg viewBox="0 0 220 215" aria-label="Figura arrodillada con codos doblados y hombros detrás de las manos">
+            <line class="ground" x1="10" y1="200" x2="210" y2="200"/>
+            <rect class="propf" x="100" y="180" width="92" height="20" rx="8"/>
+            <circle class="propf" cx="203" cy="188" r="10"/>
+            <polyline class="limb" points="32,197 74,197 80,150"/>
+            <polyline class="limb" points="80,150 98,104"/>
+            <polyline class="limb" points="98,104 132,140 122,178"/>
+            <circle class="headc" cx="106" cy="86" r="12"/>
+            <line class="guide" x1="98" y1="104" x2="122" y2="178"/>
+            <text class="lbl" x="136" y="128">codo doblado</text>
+          </svg>
+          <figcaption><b>Incorrecto: codos doblados</b>Hombros detrás de las manos: la fuerza sale de los brazos y la compresión pierde profundidad.</figcaption>
+        </figure>
+      </div>
+      <div class="cols">
+        <div>
+          <h3>Cómo se hace</h3>
+          <ol>
+            <li>Arrodíllate al lado del maniquí, a la altura del pecho.</li>
+            <li>Coloca el talón de una mano en el centro del pecho y la otra encima, con los dedos entrelazados.</li>
+            <li>Estira y bloquea los codos.</li>
+            <li>Ubica los hombros justo encima de las manos.</li>
+            <li>Comprime dejando caer el peso del tronco y deja que el pecho se reexpanda por completo, a 100–120 por minuto.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>Errores frecuentes</h3>
+          <ul class="errors">
+            <li>Doblar los codos en cada compresión.</li>
+            <li>Quedar con los hombros por detrás de las manos.</li>
+            <li>Ritmo demasiado lento (menos de 100) o acelerado (más de 120).</li>
+            <li>Apoyarse sobre el pecho sin dejarlo reexpandirse.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Criterio</th><th>Qué mide la app</th><th>Valor por defecto</th><th>Clave en la hoja</th></tr></thead>
+        <tbody>
+          <tr><td>Brazos rectos</td><td>Ángulo hombro-codo-muñeca durante la compresión</td><td class="num">≥ 160°</td><td><code>rcp.codo_min</code></td></tr>
+          <tr><td>Hombros sobre las manos</td><td>Desviación de la línea hombro-muñeca respecto a la vertical</td><td class="num">≤ 20°</td><td><code>rcp.hombros_max</code></td></tr>
+          <tr><td>Ritmo</td><td>Compresiones por minuto, calculadas con las últimas compresiones</td><td class="num">100–120 /min</td><td><code>rcp.ritmo_min</code> · <code>rcp.ritmo_max</code></td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">La cámara no mide la profundidad de la compresión (5–6 cm). Para eso se necesita un maniquí con sensor.</p>
+    </div>
+  </section>
+
+  <!-- ============ HOMBRO ============ -->
+  <section class="ex" id="hombro">
+    <div class="ex-head"><h2>Abducción de hombro</h2><span class="view">De frente</span></div>
+    <p class="purpose">Ejercicio de rehabilitación para recuperar el rango de movimiento del hombro tras cirugía, inmovilización o lesión del manguito rotador. Sirve para que el estudiante aprenda a guiar y a observar la compensación del paciente.</p>
+    <div class="card">
+      <div class="figs">
+        <figure class="ok">
+          <svg viewBox="0 0 200 260" aria-label="Figura de frente con un brazo elevado y recto y el tronco vertical">
+            <line class="ground" x1="20" y1="247" x2="180" y2="247"/>
+            <polyline class="limb" points="80,102 120,102"/>
+            <polyline class="limb" points="100,102 100,170"/>
+            <polyline class="limb" points="88,170 112,170"/>
+            <polyline class="limb" points="88,170 86,210 85,245"/>
+            <polyline class="limb" points="112,170 114,210 115,245"/>
+            <polyline class="limb" points="80,102 76,135 74,165"/>
+            <polyline class="limb" points="120,102 134,64 148,26"/>
+            <circle class="headc" cx="100" cy="80" r="13"/>
+            <line class="guide" x1="100" y1="96" x2="100" y2="176"/>
+            <text class="lbl" x="140" y="110">≥ 150°</text>
+          </svg>
+          <figcaption><b>Correcto: brazo arriba, tronco quieto</b>El brazo sube de lado con el codo extendido; la línea media del cuerpo sigue vertical.</figcaption>
+        </figure>
+        <figure class="bad">
+          <svg viewBox="0 0 200 260" aria-label="Figura de frente con el brazo a media altura, codo doblado y tronco inclinado">
+            <line class="ground" x1="20" y1="247" x2="180" y2="247"/>
+            <polyline class="limb" points="68,100 108,106"/>
+            <polyline class="limb" points="88,103 100,170"/>
+            <polyline class="limb" points="88,170 112,170"/>
+            <polyline class="limb" points="88,170 86,210 85,245"/>
+            <polyline class="limb" points="112,170 114,210 115,245"/>
+            <polyline class="limb" points="68,100 64,133 62,163"/>
+            <polyline class="limb" points="108,106 146,94 160,66"/>
+            <circle class="headc" cx="82" cy="80" r="13"/>
+            <line class="guide" x1="100" y1="96" x2="100" y2="176"/>
+            <text class="lbl" x="110" y="140">tronco inclinado</text>
+          </svg>
+          <figcaption><b>Incorrecto: compensa con el tronco</b>Brazo a media altura, codo doblado y el cuerpo inclinado al lado contrario.</figcaption>
+        </figure>
+      </div>
+      <div class="cols">
+        <div>
+          <h3>Cómo se hace</h3>
+          <ol>
+            <li>De pie y de frente a la cámara, con los brazos a los lados del cuerpo.</li>
+            <li>Sube un brazo de lado, con el codo extendido y el pulgar hacia arriba.</li>
+            <li>Llega lo más alto posible sin dolor, manteniendo el tronco vertical.</li>
+            <li>Baja despacio hasta la posición inicial. Repite o alterna los brazos.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>Errores frecuentes</h3>
+          <ul class="errors">
+            <li>Inclinar el tronco hacia el lado contrario para "ganar" altura.</li>
+            <li>Doblar el codo durante la elevación.</li>
+            <li>Elevar el hombro hacia la oreja en lugar de mover el brazo.</li>
+            <li>Bajar el brazo de golpe.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Criterio</th><th>Qué mide la app</th><th>Valor por defecto</th><th>Clave en la hoja</th></tr></thead>
+        <tbody>
+          <tr><td>Rango alcanzado</td><td>Ángulo entre el tronco (cadera-hombro) y el brazo (hombro-muñeca)</td><td class="num">≥ 150°</td><td><code>hombro.abd_min</code></td></tr>
+          <tr><td>Tronco sin compensar</td><td>Inclinación lateral de la línea media cadera-hombros</td><td class="num">≤ 10°</td><td><code>hombro.tronco_max</code></td></tr>
+          <tr><td>Codo extendido</td><td>Ángulo del codo mientras el brazo está arriba</td><td class="num">≥ 150°</td><td><code>hombro.codo_min</code></td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">Para pacientes en rehabilitación temprana, baja <code>hombro.abd_min</code> (por ejemplo a 90° o 120°) según la indicación.</p>
+    </div>
+  </section>
+
+  <!-- ============ SILLA ============ -->
+  <section class="ex" id="silla">
+    <div class="ex-head"><h2>Sentarse y levantarse (30 s)</h2><span class="view">De perfil</span></div>
+    <p class="purpose">Es la prueba de 30 segundos de sentarse y levantarse (30-Second Chair Stand Test). Valora la fuerza de las piernas y el riesgo de caídas en adultos mayores. Se cuentan las veces que la persona se pone de pie por completo en 30 segundos.</p>
+    <div class="card">
+      <div class="figs">
+        <figure class="ok">
+          <svg viewBox="0 0 200 215" aria-label="Figura sentada en una silla con los brazos cruzados sobre el pecho">
+            <line class="ground" x1="10" y1="200" x2="190" y2="200"/>
+            <polyline class="prop" points="40,88 40,200"/>
+            <polyline class="prop" points="40,150 95,150 95,200"/>
+            <polyline class="limb" points="130,200 110,200 112,150 68,146"/>
+            <polyline class="limb" points="68,146 72,90"/>
+            <polyline class="limb" points="72,90 92,112 80,98"/>
+            <circle class="headc" cx="76" cy="72" r="12"/>
+          </svg>
+          <figcaption><b>Inicio: sentado</b>Espalda apoyada, pies en el suelo y brazos cruzados sobre el pecho.</figcaption>
+        </figure>
+        <figure class="ok">
+          <svg viewBox="0 0 200 215" aria-label="Figura de pie, completamente erguida, con los brazos cruzados">
+            <line class="ground" x1="10" y1="200" x2="190" y2="200"/>
+            <polyline class="prop" points="40,88 40,200"/>
+            <polyline class="prop" points="40,150 95,150 95,200"/>
+            <polyline class="limb" points="130,200 110,200 110,150 108,104"/>
+            <polyline class="limb" points="108,104 110,50"/>
+            <polyline class="limb" points="110,50 128,72 114,60"/>
+            <circle class="headc" cx="112" cy="32" r="12"/>
+            <text class="lbl" x="124" y="150">≥ 160°</text>
+          </svg>
+          <figcaption><b>Correcto: de pie por completo</b>Rodillas y caderas totalmente extendidas antes de volver a sentarse.</figcaption>
+        </figure>
+        <figure class="bad">
+          <svg viewBox="0 0 200 215" aria-label="Figura a medio levantar empujándose con las manos sobre las rodillas">
+            <line class="ground" x1="10" y1="200" x2="190" y2="200"/>
+            <polyline class="prop" points="40,88 40,200"/>
+            <polyline class="prop" points="40,150 95,150 95,200"/>
+            <polyline class="limb" points="138,200 116,200 120,152 84,128"/>
+            <polyline class="limb" points="84,128 122,90"/>
+            <polyline class="limb" points="122,90 128,122 120,150"/>
+            <circle class="headc" cx="136" cy="80" r="12"/>
+          </svg>
+          <figcaption><b>Incorrecto: se apoya con las manos</b>Empuja sobre los muslos y no termina de ponerse de pie.</figcaption>
+        </figure>
+      </div>
+      <div class="cols">
+        <div>
+          <h3>Cómo se hace</h3>
+          <ol>
+            <li>Usa una silla sin brazos, de unos 43 cm de altura, apoyada contra la pared.</li>
+            <li>Siéntate en el centro, con la espalda recta, los pies apoyados y los brazos cruzados sobre el pecho.</li>
+            <li>A la señal, ponte de pie por completo y vuelve a sentarte.</li>
+            <li>Repite tantas veces como puedas. La app empieza a contar 30 s al primer levantamiento.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>Errores frecuentes</h3>
+          <ul class="errors">
+            <li>Usar las manos para impulsarse en los muslos o en la silla.</li>
+            <li>No terminar de pararse (rodillas o caderas flexionadas).</li>
+            <li>Dejarse caer al sentarse.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Criterio</th><th>Qué mide la app</th><th>Valor por defecto</th><th>Clave en la hoja</th></tr></thead>
+        <tbody>
+          <tr><td>Rodillas extendidas</td><td>Extensión máxima de rodilla al ponerse de pie</td><td class="num">≥ 160°</td><td><code>silla.rodilla_min</code></td></tr>
+          <tr><td>Cadera extendida</td><td>Ángulo hombro-cadera-rodilla al ponerse de pie</td><td class="num">≥ 160°</td><td><code>silla.cadera_min</code></td></tr>
+          <tr><td>Sin apoyar las manos</td><td>Las muñecas se mantienen por encima de la cadera</td><td class="num">Brazos cruzados</td><td>—</td></tr>
+          <tr><td>Duración y meta</td><td>Tiempo de la prueba y levantadas correctas esperadas</td><td class="num">30 s · 12</td><td><code>silla.duracion</code> · <code>silla.meta</code></td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">Los valores de referencia de esta prueba varían según la edad y el sexo. Ajusta <code>silla.meta</code> al grupo que estés evaluando.</p>
+    </div>
+  </section>
+
+  <!-- ============ EMPUJAR ============ -->
+  <section class="ex" id="empujar">
+    <div class="ex-head"><h2>Empujar o halar</h2><span class="view">De perfil</span></div>
+    <p class="purpose">Técnica para trasladar camillas, sillas de ruedas o carros sin sobrecargar la espalda. La fuerza debe venir de las piernas, con una base de apoyo amplia.</p>
+    <div class="card">
+      <div class="figs">
+        <figure class="ok">
+          <svg viewBox="0 0 210 215" aria-label="Figura empujando un carro con un pie adelante, codos flexionados y espalda recta">
+            <line class="ground" x1="10" y1="200" x2="200" y2="200"/>
+            <rect class="prop" x="140" y="118" width="56" height="54" rx="4"/>
+            <line class="prop" x1="140" y1="108" x2="140" y2="172"/>
+            <circle class="prop" cx="152" cy="188" r="10"/>
+            <circle class="prop" cx="186" cy="188" r="10"/>
+            <polyline class="limb" points="58,200 40,200 58,160 76,125"/>
+            <polyline class="limb" points="118,200 100,200 96,160 76,125"/>
+            <polyline class="limb" points="76,125 92,68"/>
+            <polyline class="limb" points="92,68 110,100 138,112"/>
+            <circle class="headc" cx="98" cy="50" r="12"/>
+            <text class="lbl" x="44" y="190">pie adelante</text>
+          </svg>
+          <figcaption><b>Correcto: base amplia</b>Un pie adelante del otro, espalda neutra, codos flexionados y cerca del cuerpo.</figcaption>
+        </figure>
+        <figure class="bad">
+          <svg viewBox="0 0 210 215" aria-label="Figura empujando con los pies juntos, la espalda doblada y los brazos rectos">
+            <line class="ground" x1="10" y1="200" x2="200" y2="200"/>
+            <rect class="prop" x="146" y="118" width="54" height="54" rx="4"/>
+            <line class="prop" x1="146" y1="108" x2="146" y2="172"/>
+            <circle class="prop" cx="158" cy="188" r="10"/>
+            <circle class="prop" cx="190" cy="188" r="10"/>
+            <polyline class="limb" points="100,200 82,200 84,160 84,122"/>
+            <polyline class="limb" points="104,200 88,200 86,160 84,122"/>
+            <polyline class="limb" points="84,122 128,92"/>
+            <polyline class="limb" points="128,92 136,104 144,116"/>
+            <circle class="headc" cx="142" cy="82" r="12"/>
+          </svg>
+          <figcaption><b>Incorrecto: pies juntos y brazos bloqueados</b>Tronco inclinado y brazos rectos: el esfuerzo se concentra en la espalda.</figcaption>
+        </figure>
+      </div>
+      <div class="cols">
+        <div>
+          <h3>Cómo se hace</h3>
+          <ol>
+            <li>Acércate al objeto y tómalo con las manos al frente, a la altura de la cintura.</li>
+            <li>Coloca un pie adelante del otro para ampliar la base de apoyo.</li>
+            <li>Mantén la espalda neutra y los codos ligeramente flexionados.</li>
+            <li>Empuja trasladando el peso de la pierna de atrás a la de adelante.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>Errores frecuentes</h3>
+          <ul class="errors">
+            <li>Pies juntos, sin base de apoyo.</li>
+            <li>Inclinar el tronco hacia adelante y empujar con la espalda.</li>
+            <li>Brazos bloqueados en extensión.</li>
+            <li>Halar cuando se puede empujar: empujar es más seguro.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Criterio</th><th>Qué mide la app</th><th>Valor por defecto</th><th>Clave en la hoja</th></tr></thead>
+        <tbody>
+          <tr><td>Espalda neutra</td><td>Inclinación de la línea cadera-hombro respecto a la vertical</td><td class="num">≤ 30°</td><td><code>empujar.tronco_max</code></td></tr>
+          <tr><td>Codos flexionados</td><td>Ángulo hombro-codo-muñeca (evita brazos bloqueados)</td><td class="num">≤ 165°</td><td><code>empujar.codo_max</code></td></tr>
+          <tr><td>Base de apoyo amplia</td><td>Distancia horizontal entre tobillos, como fracción del largo de la pierna</td><td class="num">≥ 35 %</td><td><code>empujar.base_min</code></td></tr>
+          <tr><td>Tramo evaluado</td><td>Cada cuántos segundos se registra una evaluación</td><td class="num">3 s</td><td><code>empujar.tramo</code></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- ============ EQUILIBRIO ============ -->
+  <section class="ex" id="equilibrio">
+    <div class="ex-head"><h2>Equilibrio en un pie</h2><span class="view">De frente</span></div>
+    <p class="purpose">Prueba de apoyo unipodal para valorar el equilibrio estático. Mantenerse menos de 5 a 10 segundos se asocia a mayor riesgo de caídas en adultos mayores.</p>
+    <div class="card">
+      <div class="figs">
+        <figure class="ok">
+          <svg viewBox="0 0 200 260" aria-label="Figura de frente sobre un pie con el tronco recto">
+            <line class="ground" x1="20" y1="247" x2="180" y2="247"/>
+            <polyline class="limb" points="80,102 120,102"/>
+            <polyline class="limb" points="100,102 100,170"/>
+            <polyline class="limb" points="88,170 112,170"/>
+            <polyline class="limb" points="88,170 88,210 88,245"/>
+            <polyline class="limb" points="112,170 120,200 114,222"/>
+            <polyline class="limb" points="80,102 74,135 70,163"/>
+            <polyline class="limb" points="120,102 126,135 130,163"/>
+            <circle class="headc" cx="100" cy="80" r="13"/>
+            <line class="guide" x1="100" y1="60" x2="100" y2="247"/>
+            <text class="lbl" x="128" y="236">≥ 10 s</text>
+          </svg>
+          <figcaption><b>Correcto: estable</b>Tronco vertical, cadera quieta y brazos relajados.</figcaption>
+        </figure>
+        <figure class="bad">
+          <svg viewBox="0 0 200 260" aria-label="Figura sobre un pie con el tronco inclinado y los brazos abiertos para no caer">
+            <line class="ground" x1="20" y1="247" x2="180" y2="247"/>
+            <polyline class="limb" points="72,108 112,98"/>
+            <polyline class="limb" points="92,103 108,170"/>
+            <polyline class="limb" points="96,170 120,170"/>
+            <polyline class="limb" points="96,170 90,210 88,245"/>
+            <polyline class="limb" points="120,170 132,198 130,222"/>
+            <polyline class="limb" points="72,108 48,92 28,84"/>
+            <polyline class="limb" points="112,98 136,84 158,78"/>
+            <circle class="headc" cx="90" cy="80" r="13"/>
+            <line class="guide" x1="100" y1="60" x2="100" y2="247"/>
+            <text class="lbl" x="122" y="140">oscila</text>
+          </svg>
+          <figcaption><b>Incorrecto: compensa para no caer</b>Tronco inclinado, cadera desplazada y brazos abiertos.</figcaption>
+        </figure>
+      </div>
+      <div class="cols">
+        <div>
+          <h3>Cómo se hace</h3>
+          <ol>
+            <li>De pie y de frente a la cámara, con una silla o pared cerca por seguridad.</li>
+            <li>Fija la mirada en un punto delante de ti.</li>
+            <li>Levanta un pie del suelo, sin apoyarlo en la otra pierna.</li>
+            <li>Mantén el equilibrio el mayor tiempo posible, hasta 30 s. Apoya el pie al perder el equilibrio.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>Errores frecuentes</h3>
+          <ul class="errors">
+            <li>Inclinar el tronco hacia un lado.</li>
+            <li>Abrir los brazos o agitarlos para compensar.</li>
+            <li>Apoyar el pie levantado sobre la otra pierna.</li>
+            <li>Mirar al suelo, lo que aumenta la oscilación.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Criterio</th><th>Qué mide la app</th><th>Valor por defecto</th><th>Clave en la hoja</th></tr></thead>
+        <tbody>
+          <tr><td>Tiempo en un pie</td><td>Desde que se levanta el pie hasta que vuelve a apoyarse</td><td class="num">≥ 10 s</td><td><code>equilibrio.tiempo_min</code></td></tr>
+          <tr><td>Cadera estable</td><td>Desplazamiento lateral de la cadera, como fracción del ancho de hombros</td><td class="num">≤ 30 %</td><td><code>equilibrio.osc_max</code></td></tr>
+          <tr><td>Tronco recto</td><td>Inclinación lateral de la línea media cadera-hombros</td><td class="num">≤ 10°</td><td><code>equilibrio.tronco_max</code></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <footer>
+    Los valores por defecto son un punto de partida razonable y se ajustan desde la hoja de configuración. La aplicación es una herramienta de apoyo formativo: no sustituye la observación ni el juicio clínico del docente.
+    <br><a href="./">Abrir el validador</a>
+  </footer>
+</div>
+</body>
+</html>
