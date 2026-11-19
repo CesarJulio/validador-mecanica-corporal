@@ -55,6 +55,33 @@ porcentaje, el criterio que más falló, el detalle por criterio y si se usó c�
 
 Para dejar de recibir resultados, borra el valor de `resultados_url`.
 
+## 5. Modo taller (actividad final)
+
+Tus estudiantes registran a participantes de otros programas con un código anónimo, antes y
+después de explicarles la técnica. Los registros llegan a la pestaña **Taller**.
+
+1. **Actualiza el script** (una vez): en Apps Script, reemplaza el código por el nuevo `apps-script/Codigo.gs`
+   y guarda. Luego **Implementar → Administrar implementaciones → ✏️ Editar → Versión: Nueva versión → Implementar**.
+   Así la URL `/exec` sigue siendo la misma.
+2. En la hoja de configuración agrega estas filas:
+
+   | clave | valor |
+   |---|---|
+   | `taller.activo` | TRUE (casilla marcada) para activar el modo taller |
+   | `taller.meta` | 10 (participantes por ejercicio) |
+   | `taller.datos_url` | el enlace CSV publicado de la pestaña Taller (paso 3) |
+
+3. **Publica la pestaña Taller** para la página de datos: Archivo → Compartir → Publicar en la Web →
+   en "Contenido publicado y configuración" elige solo **Hoja 1** y **Taller** (no Resultados, que tiene nombres).
+   En "Vínculo" elige la pestaña **Taller** y formato CSV, y copia ese enlace en `taller.datos_url`.
+
+Mientras `taller.activo` esté marcado, la app muestra "Registro del taller" en lugar de "Tus datos".
+Al terminar la actividad, desmárcalo para volver al modo práctica.
+
+Páginas para los estudiantes:
+- `guia-taller.html`: organización, protocolo con cada participante e instrucciones para crear el póster con IA.
+- `datos-taller.html`: avance de la meta, antes y después por ejercicio, descarga de datos y resumen para la IA.
+
 ## Vista docente
 
 Agrega `?docente` al final del enlace de la página (por ejemplo `https://.../index.html?docente`) para:

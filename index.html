@@ -159,6 +159,11 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 .field input { font: inherit; font-weight: 400; padding: 9px 11px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); width: 100%; }
 .field input:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
 .field.missing input { border-color: var(--bad); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+.seg button { font-size: .88rem; padding: 9px 8px; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.field.missing input, .toggle.missing { color: var(--bad); }
+.code { font-family: var(--f-mono); letter-spacing: .08em; }
 .msg-ok { color: var(--ok); font-weight: 700; }
 .msg-bad { color: var(--bad); font-weight: 700; }
 
@@ -220,6 +225,26 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
           <label class="field">Grupo<input id="stGroup" type="text" maxlength="30" placeholder="Ej. 3A"></label>
         </div>
         <p class="note">Al terminar, pulsa "Enviar al docente" para que tu resultado quede registrado.</p>
+      </div>
+      <div class="panel" id="tallerPanel" hidden>
+        <h2>Registro del taller</h2>
+        <div class="student">
+          <label class="field" id="fTeam">Equipo facilitador<input id="tkTeam" type="text" maxlength="40" placeholder="Ej. Equipo 3"></label>
+          <label class="field">Código del participante<input id="tkCode" class="code" type="text" readonly></label>
+        </div>
+        <label class="field" id="fProg" style="margin-top:10px">Programa académico del participante<input id="tkProg" type="text" list="progList" maxlength="60" placeholder="Ej. Ingeniería de sistemas"></label>
+        <datalist id="progList">
+          <option value="Administración de empresas"></option><option value="Contaduría pública"></option><option value="Derecho"></option>
+          <option value="Licenciatura / Educación"></option><option value="Ingeniería"></option><option value="Psicología"></option>
+          <option value="Medicina"></option><option value="Comunicación social"></option><option value="Trabajo social"></option>
+        </datalist>
+        <div class="seg" role="group" aria-label="Momento de la medición">
+          <button type="button" id="mAntes" aria-pressed="true">Antes de explicar</button>
+          <button type="button" id="mDespues" aria-pressed="false">Después de explicar</button>
+        </div>
+        <label class="toggle" id="fConsent"><input type="checkbox" id="tkConsent"> El participante aceptó participar de forma anónima y voluntaria</label>
+        <div class="controls"><button type="button" id="btnNewP">Nuevo participante</button></div>
+        <p class="note">No se registra el nombre del participante, solo el código. Haz la medición "antes", explica la técnica y repite "después" con el mismo código.</p>
       </div>
       <div class="panel">
         <h2 id="scoreTitle">Resultado de la sesión</h2>
@@ -684,7 +709,7 @@ window.__vp = { EXERCISES };
 // CONFIGURACIÓN (hoja de Google o config.csv)
 // =====================================================================
 const cfg = {}, active = {};
-let notice = "", cfgSource = "valores por defecto", resultsUrl = "";
+let notice = "", cfgSource = "valores por defecto", resultsUrl = "", tallerOn = false;
 EXERCISES.forEach((e) => { cfg[e.id] = {}; for (const k in e.params) cfg[e.id][k] = e.params[k].def; active[e.id] = true; });
 
 function parseCSV(s) {
@@ -707,6 +732,7 @@ function applyCSV(text) {
     const key = (rawKey || "").trim().toLowerCase(), val = rawVal.trim();
     if (!key || key === "clave") continue;
     if (key === "mensaje") { notice = val; known++; continue; }
+    if (key === "taller.activo") { tallerOn = truthy(val); known++; continue; }
     if (key === "resultados_url") { if (/^https:\/\/script\.google\.com\//.test(val)) resultsUrl = val; known++; continue; }
     const [id, param] = key.split(".");
     if (!cfg[id]) continue;
@@ -971,34 +997,88 @@ function loadStudent() {
   try { localStorage.setItem(id === "stName" ? "vp.name" : "vp.group", $(id).value.trim()); } catch {}
   if (id === "stName") $("fName").classList.remove("missing");
 }));
-$("btnSend").onclick = async () => {
-  const nombre = $("stName").value.trim(), grupo = $("stGroup").value.trim();
-  if (nombre.length < 3) { $("fName").classList.add("missing"); $("stName").focus(); setMsg("Escribe tu nombre completo arriba para enviar.", "msg-bad"); return; }
-  if (!reps.length) { setMsg(`Aún no hay ${EX.units.toLowerCase()} para enviar.`, "msg-bad"); return; }
+// ---------- taller: registro anónimo de participantes ----------
+let momento = "Antes";
+const store = { get: (k) => { try { return localStorage.getItem(k) || ""; } catch { return ""; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
+function newCode() {
+  const abc = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let s = "P-";
+  const rnd = crypto.getRandomValues(new Uint8Array(5)); rnd.forEach((b) => (s += abc[b % abc.length]));
+  return s;
+}
+function setMomento(m) {
+  momento = m;
+  $("mAntes").setAttribute("aria-pressed", String(m === "Antes"));
+  $("mDespues").setAttribute("aria-pressed", String(m === "Después"));
+  store.set("vp.tk.momento", m);
+}
+function newParticipant() {
+  $("tkCode").value = newCode(); store.set("vp.tk.code", $("tkCode").value);
+  $("tkProg").value = ""; store.set("vp.tk.prog", "");
+  $("tkConsent").checked = false; setMomento("Antes"); resetSession();
+}
+function initTaller() {
+  $("tkTeam").value = store.get("vp.tk.team");
+  $("tkProg").value = store.get("vp.tk.prog");
+  $("tkCode").value = store.get("vp.tk.code") || newCode(); store.set("vp.tk.code", $("tkCode").value);
+  setMomento(store.get("vp.tk.momento") === "Después" ? "Después" : "Antes");
+  $("tkTeam").addEventListener("input", () => { store.set("vp.tk.team", $("tkTeam").value.trim()); $("fTeam").classList.remove("missing"); });
+  $("tkProg").addEventListener("input", () => { store.set("vp.tk.prog", $("tkProg").value.trim()); $("fProg").classList.remove("missing"); });
+  $("tkConsent").addEventListener("change", () => $("fConsent").classList.remove("missing"));
+  $("mAntes").onclick = () => setMomento("Antes");
+  $("mDespues").onclick = () => setMomento("Después");
+  $("btnNewP").onclick = () => { newParticipant(); setMsg("Nuevo participante listo: " + $("tkCode").value + ".", "msg-ok"); };
+}
+
+function summarize() {
   const ok = reps.filter((r) => r.ok).length;
   const fails = EX.criteria.map((c) => ({ c, n: reps.filter((r) => r.items.find((i) => i.c === c && !i.ok)).length }));
   const worst = fails.reduce((a, b) => (b.n > a.n ? b : a));
-  const data = {
-    nombre, grupo, ejercicio: EX.name,
-    total: reps.length, correctas: ok, incorrectas: reps.length - ok,
+  return {
+    ejercicio: EX.name, total: reps.length, correctas: ok, incorrectas: reps.length - ok,
     porcentaje: Math.round(ok / reps.length * 100),
     falla: worst.n ? worst.c.label : "Ninguno",
     detalle: fails.map((f) => `${f.c.label}: ${f.n}/${reps.length} fallas`).join("; "),
     fuente: lastSource
   };
-  const btn = $("btnSend"); btn.disabled = true; setMsg("Enviando…");
+}
+async function post(data) {
   const body = JSON.stringify(data);
-  let sent = false;
   try {
     const r = await fetch(resultsUrl, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body });
     const j = await r.json().catch(() => ({}));
-    sent = r.ok && j.ok !== false;
+    return r.ok && j.ok !== false;
   } catch {
-    try { await fetch(resultsUrl, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body }); sent = true; } catch {}
+    try { await fetch(resultsUrl, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body }); return true; } catch { return false; }
   }
+}
+
+$("btnSend").onclick = async () => {
+  let data;
+  if (tallerOn) {
+    const equipo = $("tkTeam").value.trim(), programa = $("tkProg").value.trim();
+    if (equipo.length < 2) { $("fTeam").classList.add("missing"); $("tkTeam").focus(); setMsg("Escribe el nombre del equipo facilitador.", "msg-bad"); return; }
+    if (programa.length < 3) { $("fProg").classList.add("missing"); $("tkProg").focus(); setMsg("Escribe el programa académico del participante.", "msg-bad"); return; }
+    if (!$("tkConsent").checked) { $("fConsent").classList.add("missing"); setMsg("Confirma que el participante aceptó participar.", "msg-bad"); return; }
+    if (!reps.length) { setMsg(`Aún no hay ${EX.units.toLowerCase()} para registrar.`, "msg-bad"); return; }
+    data = { hoja: "Taller", equipo, codigo: $("tkCode").value, programa, momento, ...summarize() };
+  } else {
+    const nombre = $("stName").value.trim(), grupo = $("stGroup").value.trim();
+    if (nombre.length < 3) { $("fName").classList.add("missing"); $("stName").focus(); setMsg("Escribe tu nombre completo arriba para enviar.", "msg-bad"); return; }
+    if (!reps.length) { setMsg(`Aún no hay ${EX.units.toLowerCase()} para enviar.`, "msg-bad"); return; }
+    data = { nombre, grupo, ...summarize() };
+  }
+  const btn = $("btnSend"); btn.disabled = true; setMsg("Enviando…");
+  const sent = await post(data);
   btn.disabled = false;
-  if (sent) { resetSession(); setMsg(`Enviado: ${data.correctas} de ${data.total} correctas (${data.porcentaje} %). Puedes hacer otro intento.`, "msg-ok"); }
-  else setMsg("No se pudo enviar. Revisa tu conexión e inténtalo de nuevo, o usa Copiar resumen.", "msg-bad");
+  if (!sent) { setMsg("No se pudo enviar. Revisa tu conexión e inténtalo de nuevo.", "msg-bad"); return; }
+  resetSession();
+  if (!tallerOn) { setMsg(`Enviado: ${data.correctas} de ${data.total} correctas (${data.porcentaje} %). Puedes hacer otro intento.`, "msg-ok"); return; }
+  if (data.momento === "Antes") {
+    setMomento("Después");
+    setMsg(`Registrado ${data.codigo} (antes): ${data.porcentaje} % correcto. Ahora explica la técnica y repite el ejercicio con el mismo código.`, "msg-ok");
+  } else {
+    setMsg(`Participante ${data.codigo} completo (después: ${data.porcentaje} %). Pulsa "Nuevo participante" para el siguiente.`, "msg-ok");
+  }
 };
 
 // ---------- inicio ----------
@@ -1007,7 +1087,10 @@ loadModel();
 await loadConfig();
 if (notice) { $("notice").textContent = notice; $("notice").hidden = false; }
 $("cfgSource").textContent = `Configuración cargada desde: ${cfgSource}. Envío de resultados: ${resultsUrl ? "activo" : "no configurado"}.`;
-if (resultsUrl) { $("studentPanel").hidden = false; $("btnSend").hidden = false; loadStudent(); }
+if (resultsUrl && tallerOn) {
+  $("tallerPanel").hidden = false; $("btnSend").hidden = false; $("btnSend").textContent = "Registrar participación"; initTaller();
+  $("cfgSource").textContent += " Modo taller: activo.";
+} else if (resultsUrl) { $("studentPanel").hidden = false; $("btnSend").hidden = false; loadStudent(); }
 const first = renderMenu();
 if (first) { selectExercise(first.id); if (landmarker) { $("btnCam").disabled = false; $("fileIn").disabled = false; } }
 </script>
