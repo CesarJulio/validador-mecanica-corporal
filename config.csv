@@ -29,4 +29,3 @@ equilibrio.osc_max,0.3,Oscilación máxima de la cadera como fracción del ancho
 equilibrio.tronco_max,10,Inclinación lateral máxima del tronco en grados
 taller.activo,FALSE,Modo taller: registro anónimo de participantes de otros programas
 taller.meta,10,Meta de participantes por ejercicio
-taller.datos_url,,Enlace CSV publicado de la pestaña Taller

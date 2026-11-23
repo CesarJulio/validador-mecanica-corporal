@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Guía del Taller y del Póster</title>
+<title>Taller de Mecánica Corporal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
 <style>
-/* Layout: documento de actividad — índice fijo arriba, secciones en orden real del proceso (preparar → taller → datos → póster con IA → entregables) */
+/* Layout: documento de actividad — cifras clave, índice fijo, secciones en el orden real del trabajo (preparar → taller → cierre) */
 :root {
   --bg: #f3f6f7;
   --surface: #ffffff;
@@ -19,7 +19,6 @@
   --accent-soft: #dff0f2;
   --warn-soft: #fbf0e2;
   --warn: #9a5b14;
-  --code-bg: #eef3f4;
   --f-display: "Archivo", "Segoe UI", system-ui, sans-serif;
   --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
   --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
@@ -28,12 +27,12 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0d1a1f; --surface: #14252b; --ink: #e3eef1; --muted: #93a8af; --line: #24393f;
-    --accent: #3fb8c8; --accent-ink: #062027; --accent-soft: #123138; --warn-soft: #33260f; --warn: #e5a75a; --code-bg: #0f2026; color-scheme: dark;
+    --accent: #3fb8c8; --accent-ink: #062027; --accent-soft: #123138; --warn-soft: #33260f; --warn: #e5a75a; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0d1a1f; --surface: #14252b; --ink: #e3eef1; --muted: #93a8af; --line: #24393f;
-  --accent: #3fb8c8; --accent-ink: #062027; --accent-soft: #123138; --warn-soft: #33260f; --warn: #e5a75a; --code-bg: #0f2026; color-scheme: dark;
+  --accent: #3fb8c8; --accent-ink: #062027; --accent-soft: #123138; --warn-soft: #33260f; --warn: #e5a75a; color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -41,7 +40,7 @@ html { scroll-behavior: smooth; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16.5px; line-height: 1.6; }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
 .wrap {
-  max-width: 900px; margin: 0 auto; padding-block: 28px 56px;
+  max-width: 880px; margin: 0 auto; padding-block: 28px 56px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
@@ -54,41 +53,41 @@ p { margin: 0 0 10px; max-width: 68ch; }
 a { color: var(--accent); }
 ul, ol { padding-left: 22px; margin: 0 0 10px; }
 li { margin-bottom: 4px; max-width: 66ch; }
+code { font-family: var(--f-mono); font-size: .88em; }
 
 nav.toc { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); display: flex; gap: 8px; overflow-x: auto; padding-block: 10px; border-bottom: 1px solid var(--line); margin: 18px 0 6px; }
 nav.toc a { flex: 0 0 auto; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: .86rem; font-weight: 700; }
 nav.toc a:hover, nav.toc a:focus-visible { border-color: var(--accent); color: var(--accent); outline: none; }
 section { padding-top: 30px; scroll-margin-top: 64px; }
-.step { font-family: var(--f-mono); font-size: .8rem; color: var(--accent); font-weight: 500; }
+.step { font-family: var(--f-mono); font-size: .8rem; color: var(--accent); font-weight: 500; margin-bottom: 4px; }
 
-.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin: 16px 0 4px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 16px 0 4px; }
 .fact { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
 .fact strong { display: block; font-family: var(--f-display); font-size: 1.5rem; line-height: 1.1; }
 .fact span { font-size: .88rem; color: var(--muted); }
 
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin: 12px 0; }
+.card > :last-child { margin-bottom: 0; }
 .callout { background: var(--accent-soft); border-radius: 12px; padding: 12px 16px; margin: 12px 0; }
 .warn { background: var(--warn-soft); border-radius: 12px; padding: 12px 16px; margin: 12px 0; }
 .warn strong { color: var(--warn); }
+.callout > :last-child, .warn > :last-child { margin-bottom: 0; }
 
-.roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
 .roles .card { margin: 0; }
 .roles h3 { margin-top: 0; }
-.roles p { font-size: .93rem; color: var(--muted); margin: 0; }
+.roles p { font-size: .93rem; color: var(--muted); }
 
 .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; margin: 10px 0; }
 table { width: 100%; border-collapse: collapse; font-size: .92rem; }
 th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
 tr:last-child td { border-bottom: 0; }
 th { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); background: var(--bg); }
-td.num { font-family: var(--f-mono); white-space: nowrap; }
 
-.prompt { position: relative; margin: 10px 0 16px; }
-.prompt pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px 14px; margin: 0; white-space: pre-wrap; word-break: break-word; font-family: var(--f-mono); font-size: .82rem; line-height: 1.55; color: var(--ink); }
-.prompt button { position: absolute; top: 8px; right: 8px; font: inherit; font-size: .8rem; font-weight: 700; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 4px 10px; cursor: pointer; }
-.prompt button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-.prompt .tag { display: inline-block; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--accent); margin-bottom: 4px; }
 .script { font-style: italic; border-left: 4px solid var(--accent); padding: 6px 0 6px 14px; margin: 10px 0; max-width: 64ch; }
+.check { list-style: none; padding-left: 0; }
+.check li { padding-left: 30px; position: relative; }
+.check li::before { content: ""; position: absolute; left: 2px; top: 4px; width: 16px; height: 16px; border: 2px solid var(--accent); border-radius: 4px; }
 
 .btns { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
 .btn { display: inline-block; text-decoration: none; font-weight: 700; border-radius: 10px; padding: 9px 14px; border: 1px solid var(--accent); }
@@ -99,222 +98,153 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line);
 <body>
 <div class="wrap">
   <div class="eyebrow">Enfermería · Actividad final</div>
-  <h1>Guía del Taller y del Póster</h1>
-  <p class="lead">Ustedes enseñarán mecánica corporal a estudiantes de otros programas, registrarán su participación con el validador y, con todos los datos del curso, crearán un póster o un recurso interactivo con ayuda de la inteligencia artificial.</p>
+  <h1>Taller de Mecánica Corporal</h1>
+  <p class="lead">En parejas, enseñarán un ejercicio de mecánica corporal a estudiantes de otros programas y medirán con el validador si su enseñanza funcionó.</p>
 
-  <div class="facts">
-    <div class="fact"><strong>6</strong><span>ejercicios, todos activos</span></div>
-    <div class="fact"><strong>10</strong><span>participantes por ejercicio</span></div>
-    <div class="fact"><strong>60</strong><span>participantes en total como meta del curso</span></div>
-    <div class="fact"><strong>1</strong><span>póster o recurso con los datos de todos</span></div>
+  <div class="btns">
+    <a class="btn primary" href="./">Abrir el validador</a>
+    <a class="btn" href="guia.html">Guía ilustrada de ejercicios</a>
   </div>
 
   <nav class="toc" aria-label="Secciones">
     <a href="#proposito">Propósito</a>
     <a href="#organizacion">Organización</a>
-    <a href="#protocolo">Protocolo con cada participante</a>
-    <a href="#datos">Los datos</a>
-    <a href="#ia">Póster con IA</a>
-    <a href="#entregables">Entregables</a>
+    <a href="#preparacion">Preparación</a>
+    <a href="#protocolo">Con cada participante</a>
+    <a href="#cuidados">Cuidados</a>
+    <a href="#cierre">Cierre</a>
+    <a href="#calendario">Calendario</a>
   </nav>
 
   <section id="proposito">
     <h2>Propósito</h2>
-    <p>La educación para la salud es una función central de enfermería. En esta actividad ustedes no presentan una aplicación: <strong>enseñan a otras personas a cuidar su cuerpo</strong> y miden si su enseñanza funcionó.</p>
+    <p>La educación para la salud es una función central de enfermería. En este taller ustedes no presentan una aplicación: <strong>enseñan a otras personas a cuidar su cuerpo</strong> y comprueban, con datos, si lo que enseñaron se tradujo en una mejor técnica.</p>
     <h3>Al terminar, podrán:</h3>
     <ul>
-      <li>Explicar con fundamento clínico la técnica correcta de cada ejercicio a personas que no son del área de salud.</li>
-      <li>Aplicar un protocolo de medición antes y después de una intervención educativa, con consentimiento y datos anónimos.</li>
-      <li>Analizar datos reales e interpretarlos con criterio clínico.</li>
-      <li>Usar la inteligencia artificial de forma responsable para comunicar resultados, verificando cada dato.</li>
+      <li>Explicar con fundamento clínico y en lenguaje sencillo la técnica correcta de un ejercicio.</li>
+      <li>Aplicar una medición antes y después de una intervención educativa, con consentimiento y datos anónimos.</li>
+      <li>Reconocer los errores de técnica más frecuentes y corregirlos.</li>
     </ul>
   </section>
 
   <section id="organizacion">
     <h2>Organización</h2>
-    <p>El curso se organiza en <strong>seis equipos, uno por ejercicio</strong>. Cada equipo busca <strong>10 participantes</strong> de otros programas académicos para su ejercicio.</p>
+    <p>Trabajarán <strong>en parejas</strong>. El docente asignará a cada pareja <strong>uno de los seis ejercicios</strong>. Cada pareja aplicará su ejercicio a <strong>5 participantes</strong> de otros programas académicos (administración, derecho, ingeniería, psicología, etc.).</p>
     <div class="tablewrap"><table>
-      <thead><tr><th>Equipo</th><th>Ejercicio</th><th>Posición de la cámara</th></tr></thead>
+      <thead><tr><th>Ejercicio</th><th>Posición de la cámara</th><th>Material</th></tr></thead>
       <tbody>
-        <tr><td>Equipo 1</td><td>Levantamiento de carga</td><td>De perfil</td></tr>
-        <tr><td>Equipo 2</td><td>RCP: compresiones</td><td>De perfil</td></tr>
-        <tr><td>Equipo 3</td><td>Abducción de hombro</td><td>De frente</td></tr>
-        <tr><td>Equipo 4</td><td>Sentarse y levantarse (30 s)</td><td>De perfil</td></tr>
-        <tr><td>Equipo 5</td><td>Empujar o halar</td><td>De perfil</td></tr>
-        <tr><td>Equipo 6</td><td>Equilibrio en un pie</td><td>De frente</td></tr>
+        <tr><td>Levantamiento de carga</td><td>De perfil</td><td>Una caja o morral con algo de peso</td></tr>
+        <tr><td>RCP: compresiones</td><td>De perfil</td><td>Maniquí o cojín firme en el suelo</td></tr>
+        <tr><td>Abducción de hombro</td><td>De frente</td><td>Ninguno</td></tr>
+        <tr><td>Sentarse y levantarse (30 s)</td><td>De perfil</td><td>Silla sin brazos, contra la pared</td></tr>
+        <tr><td>Empujar o halar</td><td>De perfil</td><td>Silla de ruedas, carro o mesa con ruedas</td></tr>
+        <tr><td>Equilibrio en un pie</td><td>De frente</td><td>Una silla o pared cerca por seguridad</td></tr>
       </tbody>
     </table></div>
-    <p>Escriban en la app el nombre del equipo siempre igual (por ejemplo "Equipo 3"), para que los datos se agrupen bien.</p>
 
-    <h3>Roles dentro del equipo</h3>
-    <p>Roten los roles entre participantes para que todos pasen por cada uno.</p>
+    <h3>Roles de la pareja</h3>
+    <p>Intercambien los roles con cada participante, para que los dos expliquen al menos dos veces.</p>
     <div class="roles">
-      <div class="card"><h3>Facilitador</h3><p>Recibe al participante, lee el consentimiento, explica la técnica y corrige.</p></div>
-      <div class="card"><h3>Operador técnico</h3><p>Ubica la cámara, maneja la app y verifica que el cuerpo completo se vea.</p></div>
-      <div class="card"><h3>Registrador</h3><p>Completa el registro en la app, cuida que el código sea el mismo antes y después, y lleva la cuenta de participantes.</p></div>
+      <div class="card"><h3>Facilitador</h3><p>Recibe al participante, lee el consentimiento, explica la técnica y corrige los errores.</p></div>
+      <div class="card"><h3>Operador y registrador</h3><p>Ubica el celular, maneja el validador, completa el registro y verifica que el código sea el mismo antes y después.</p></div>
     </div>
+  </section>
 
-    <h3>Antes del taller</h3>
+  <section id="preparacion">
+    <h2>Preparación</h2>
     <ol>
-      <li>Estudien su ejercicio en la <a href="guia.html">guía ilustrada de ejercicios</a>: técnica, errores frecuentes y base clínica.</li>
-      <li>Escriban un <strong>guion de explicación de máximo 3 minutos</strong>, en lenguaje sencillo, sin tecnicismos innecesarios.</li>
-      <li>Ensayen entre ustedes con la app hasta que la cámara detecte bien el ejercicio.</li>
-      <li>Presenten el guion al docente para revisar el contenido clínico.</li>
+      <li><strong>Estudien su ejercicio</strong> en la <a href="guia.html">guía ilustrada</a>: cómo se hace, errores frecuentes y base clínica.</li>
+      <li><strong>Preparen una explicación de máximo 3 minutos</strong>, en lenguaje sencillo: por qué es importante, cómo se hace y qué error evitar.</li>
+      <li><strong>Ensayen entre ustedes</strong> con el validador hasta que la cámara detecte bien el ejercicio. Busquen un lugar con buena luz y espacio para ver el cuerpo completo.</li>
+      <li><strong>Prueben el registro:</strong> en el validador, en "Registro del taller", escriban los apellidos de la pareja siempre de la misma forma (por ejemplo, <code>Gómez – Ruiz</code>).</li>
     </ol>
   </section>
 
   <section id="protocolo">
-    <h2>Protocolo con cada participante</h2>
-    <p>Unos 8 minutos por persona. Sigan siempre los mismos pasos, así los datos son comparables.</p>
+    <h2>Con cada participante</h2>
+    <p>Sigan siempre los mismos pasos, así los datos de todo el curso son comparables.</p>
 
     <div class="card">
-      <p class="step">Paso 1 · Consentimiento (30 s)</p>
+      <p class="step">Paso 1 · Consentimiento</p>
       <p>Lean en voz alta:</p>
-      <p class="script">"Somos estudiantes de enfermería y estamos haciendo un taller de mecánica corporal. Te pediremos hacer un ejercicio frente a la cámara, luego te explicaremos la técnica y lo repetirás. No guardamos tu nombre ni tu video: solo un código y tu programa académico. Tu participación es voluntaria y puedes retirarte cuando quieras. ¿Aceptas participar?"</p>
-      <p>Solo si acepta, marquen la casilla de consentimiento en la app.</p>
+      <p class="script">"Somos estudiantes de enfermería y estamos haciendo un taller de mecánica corporal. Te pediremos hacer un ejercicio frente a la cámara; luego te explicaremos la técnica y lo repetirás. No guardamos tu nombre ni tu imagen: solo un código y tu programa académico. Tu participación es voluntaria y puedes retirarte cuando quieras. ¿Aceptas participar?"</p>
+      <p>Solo si acepta, marquen la casilla de consentimiento en el validador.</p>
     </div>
 
     <div class="card">
-      <p class="step">Paso 2 · Medición "antes" (1–2 min)</p>
+      <p class="step">Paso 2 · Medición "antes"</p>
       <ol>
-        <li>En la app pulsen <strong>Nuevo participante</strong>: se genera un código como <code>P-7KQ2M</code>.</li>
-        <li>Escriban el programa académico del participante y verifiquen que esté marcado <strong>Antes de explicar</strong>.</li>
-        <li>Pidan al participante que haga el ejercicio <strong>como él cree que es correcto</strong>, sin darle ninguna indicación. Al menos 3 repeticiones.</li>
-        <li>Pulsen <strong>Registrar participación</strong>. La app pasa sola a "Después de explicar".</li>
+        <li>Pulsen <strong>Nuevo participante</strong>. El validador genera un código, por ejemplo <code>P-7KQ2M</code>.</li>
+        <li>Escriban el <strong>programa académico</strong> del participante y verifiquen que esté marcado <strong>Antes de explicar</strong>.</li>
+        <li>Pidan al participante que haga el ejercicio <strong>como él cree que es correcto</strong>, sin darle ninguna indicación. Mínimo 3 repeticiones.</li>
+        <li>Pulsen <strong>Registrar participación</strong>. El validador pasa solo a "Después de explicar".</li>
       </ol>
     </div>
 
     <div class="card">
-      <p class="step">Paso 3 · Explicación (3 min)</p>
-      <p>Expliquen la técnica con su guion y con la guía ilustrada: por qué es importante, cómo se hace y qué error cometió. Pueden mostrar los criterios en pantalla.</p>
+      <p class="step">Paso 3 · Explicación</p>
+      <p>Expliquen la técnica en máximo 3 minutos, apoyándose en la guía ilustrada. Muéstrenle qué hizo bien y qué error cometió.</p>
     </div>
 
     <div class="card">
-      <p class="step">Paso 4 · Medición "después" (1–2 min)</p>
+      <p class="step">Paso 4 · Medición "después"</p>
       <ol>
-        <li>Con el <strong>mismo código</strong>, el participante repite el ejercicio (al menos 3 repeticiones).</li>
+        <li>Con el <strong>mismo código</strong>, el participante repite el ejercicio. Mínimo 3 repeticiones.</li>
         <li>Pulsen <strong>Registrar participación</strong>.</li>
-        <li>Agradezcan y pulsen <strong>Nuevo participante</strong> para el siguiente.</li>
+        <li>Agradezcan la participación y pulsen <strong>Nuevo participante</strong> para el siguiente.</li>
       </ol>
     </div>
-
-    <div class="warn"><strong>Importante:</strong> no registren nombres, fotos ni videos de los participantes. No repitan la medición "antes" para obtener mejores números: los datos tienen valor precisamente porque son reales.</div>
   </section>
 
-  <section id="datos">
-    <h2>Los datos</h2>
-    <p>Todos los registros del curso se reúnen en una sola base. En la página de datos pueden ver el avance hacia la meta, la comparación antes y después por ejercicio, el error más frecuente y los programas participantes.</p>
-    <div class="btns">
-      <a class="btn primary" href="datos-taller.html">Abrir los datos del taller</a>
-      <a class="btn" href="./">Abrir el validador</a>
+  <section id="cuidados">
+    <h2>Cuidados</h2>
+    <div class="warn">
+      <p><strong>Seguridad:</strong> las compresiones de RCP se hacen <strong>solo sobre un maniquí o un cojín</strong>, nunca sobre una persona. En equilibrio, tengan una silla o pared al alcance. Si un participante siente dolor o mareo, se detiene el ejercicio.</p>
     </div>
-    <p>Para el póster usarán <strong>los datos de todos los ejercicios</strong>. En la página de datos, dejen los filtros en "Todos" y:</p>
+    <div class="callout">
+      <p><strong>Privacidad:</strong> no escriban el nombre del participante en ningún lado. No tomen fotos ni graben videos. El validador no guarda imágenes: solo el código, el programa y el resultado.</p>
+    </div>
+    <div class="callout">
+      <p><strong>Datos reales:</strong> no repitan la medición "antes" para obtener mejores números. Los datos tienen valor porque muestran lo que realmente pasó.</p>
+    </div>
+  </section>
+
+  <section id="cierre">
+    <h2>Cierre</h2>
+    <p>En la última clase revisaremos juntos los resultados de todo el curso: cuántas personas participaron, si mejoraron después de la explicación y cuál fue el error más frecuente en cada ejercicio.</p>
+    <p>Lleguen preparados para comentar:</p>
     <ul>
-      <li><strong>Copiar resumen para la IA:</strong> copia un texto con todas las cifras calculadas.</li>
-      <li><strong>Descargar datos (CSV):</strong> descarga la tabla completa, por si quieren que la IA haga sus propios cálculos o gráficas.</li>
+      <li>¿Qué fue lo más difícil de enseñarle a alguien que no es del área de la salud?</li>
+      <li>¿Qué cambiarían de su explicación después de ver los resultados?</li>
+    </ul>
+
+    <h3>Lista de chequeo de la pareja</h3>
+    <ul class="check">
+      <li>Estudiamos el ejercicio y preparamos la explicación de 3 minutos.</li>
+      <li>Ensayamos con el validador antes del taller.</li>
+      <li>Registramos a 5 participantes, cada uno con su medición antes y después.</li>
+      <li>Todos los participantes dieron su consentimiento.</li>
+      <li>No registramos nombres, fotos ni videos.</li>
     </ul>
   </section>
 
-  <section id="ia">
-    <h2>Del dato al póster con IA</h2>
-    <p>Pueden usar Claude, ChatGPT, Gemini o la herramienta que prefieran. El proceso tiene tres pasos: <strong>analizar</strong>, <strong>crear</strong> y <strong>verificar</strong>. Copien cada instrucción, péguenla en la IA y agreguen el resumen de datos donde se indica.</p>
-
-    <h3>Paso 1 · Analizar e interpretar</h3>
-    <div class="prompt"><span class="tag">Instrucción 1 · Análisis</span><button type="button" data-copy>Copiar</button><pre>Actúa como docente de enfermería experto en salud ocupacional y educación para la salud.
-Somos estudiantes de enfermería. Dictamos un taller de mecánica corporal a estudiantes de otros programas académicos. Medimos con una aplicación de visión artificial cómo realizaban 6 ejercicios antes y después de nuestra explicación.
-
-Con los datos que pego abajo:
-1. Resume los hallazgos principales en 5 puntos, con las cifras exactas.
-2. Identifica en qué ejercicios mejoró más y menos la ejecución, y propón posibles explicaciones clínicas o pedagógicas.
-3. Señala los errores técnicos más frecuentes y qué riesgo de lesión implica cada uno.
-4. Indica las limitaciones del estudio (tamaño de muestra, medición con cámara, efecto inmediato, etc.).
-No inventes datos: usa solo las cifras del resumen. Si algo no se puede concluir, dilo.
-
-DATOS:
-[pega aquí el resumen copiado de la página de datos]</pre></div>
-
-    <h3>Paso 2 · Crear el póster o el recurso interactivo</h3>
-    <p>Elijan una de las dos opciones.</p>
-    <div class="prompt"><span class="tag">Instrucción 2A · Póster académico</span><button type="button" data-copy>Copiar</button><pre>Con el análisis anterior, redacta el contenido de un póster académico de enfermería con estas secciones:
-- Título atractivo y claro (máximo 15 palabras)
-- Autores: [nombres del curso] · Programa de Enfermería · [institución] · [fecha]
-- Introducción (máximo 60 palabras): importancia de la mecánica corporal y de la educación para la salud
-- Objetivo (una oración)
-- Metodología (máximo 70 palabras): taller, 6 ejercicios, medición antes y después con visión artificial, participantes anónimos con consentimiento
-- Resultados: 3 a 4 cifras clave destacadas y la descripción de 2 gráficas que debemos incluir (tipo de gráfica, ejes y datos exactos)
-- Discusión (máximo 80 palabras)
-- Conclusiones (3 viñetas)
-- Uso de IA: una línea que declare para qué se usó la inteligencia artificial
-Escribe en español, con lenguaje claro y cifras exactas del resumen. Luego sugiere una paleta de colores y una distribución en 3 columnas para armarlo en Canva o PowerPoint.</pre></div>
-
-    <div class="prompt"><span class="tag">Instrucción 2B · Recurso interactivo</span><button type="button" data-copy>Copiar</button><pre>Con el análisis anterior, crea un recurso educativo interactivo en un solo archivo HTML (con CSS y JavaScript incluidos) dirigido a estudiantes universitarios de cualquier programa. Debe tener:
-1. Una portada con el título del taller y la cifra más importante de los resultados.
-2. Una sección por cada uno de los 6 ejercicios: por qué importa, cómo se hace (pasos), el error más frecuente que encontramos y su resultado antes y después en una gráfica de barras.
-3. Un mini cuestionario de 5 preguntas de selección múltiple con retroalimentación inmediata sobre mecánica corporal.
-4. Una sección "Cómo lo medimos" con la metodología y las limitaciones.
-5. Un pie con los autores, la institución y la declaración de uso de IA.
-Usa solo los datos del resumen, sin inventar cifras. Diseño limpio, legible en celular, colores sobrios.</pre></div>
-
-    <h3>Paso 3 · Verificar antes de entregar</h3>
-    <div class="callout">
-      <ul>
-        <li>Cada cifra del póster o recurso coincide con la página de datos. Revísenlas una por una.</li>
-        <li>Las explicaciones clínicas son correctas. Si la IA citó una fuente, búsquenla y confirmen que existe.</li>
-        <li>No aparece ningún dato que pueda identificar a un participante.</li>
-        <li>Incluyeron la declaración de uso de IA.</li>
-      </ul>
-    </div>
-    <div class="warn"><strong>Uso responsable de la IA:</strong> la IA es una herramienta para redactar y diseñar, no la autora del trabajo. Ustedes son responsables de cada dato y de cada afirmación clínica. Las IA a veces inventan cifras o referencias: si algo no aparece en sus datos, no va en el póster.</div>
-  </section>
-
-  <section id="entregables">
-    <h2>Entregables</h2>
-    <ol>
-      <li><strong>Póster o recurso interactivo</strong> del curso, con los datos de todos los ejercicios.</li>
-      <li><strong>Guion de explicación</strong> de cada equipo (máximo 1 página).</li>
-      <li><strong>Reflexión individual</strong> (máximo 1 página): ¿qué aprendí al enseñar? ¿qué fue lo más difícil? ¿qué me dicen los datos sobre mi forma de explicar? ¿cómo usé la IA y qué tuve que corregirle?</li>
-    </ol>
-
-    <h3>Criterios de valoración</h3>
-    <div class="tablewrap"><table>
-      <thead><tr><th>Criterio</th><th>Qué se espera</th><th>Peso</th></tr></thead>
-      <tbody>
-        <tr><td>Rigor del taller</td><td>Protocolo seguido, consentimiento, meta de participantes, datos completos antes y después</td><td class="num">25 %</td></tr>
-        <tr><td>Contenido clínico</td><td>Explicación correcta y fundamentada de la técnica y de los riesgos</td><td class="num">20 %</td></tr>
-        <tr><td>Análisis de datos</td><td>Cifras exactas, interpretación con criterio clínico, limitaciones reconocidas</td><td class="num">20 %</td></tr>
-        <tr><td>Comunicación</td><td>Póster o recurso claro, bien organizado, con gráficas legibles</td><td class="num">15 %</td></tr>
-        <tr><td>Uso responsable de la IA</td><td>Datos verificados, sin cifras ni referencias inventadas, uso declarado</td><td class="num">10 %</td></tr>
-        <tr><td>Reflexión individual</td><td>Análisis honesto del propio aprendizaje como educador en salud</td><td class="num">10 %</td></tr>
-      </tbody>
-    </table></div>
-
-    <h3>Calendario sugerido</h3>
+  <section id="calendario">
+    <h2>Calendario</h2>
     <div class="tablewrap"><table>
       <thead><tr><th>Día</th><th>Actividad</th></tr></thead>
       <tbody>
-        <tr><td>1</td><td>Presentación de la actividad, conformación de equipos y estudio del ejercicio</td></tr>
-        <tr><td>2</td><td>Guion de explicación y ensayo con la app</td></tr>
-        <tr><td>3–5</td><td>Taller con participantes de otros programas (meta: 10 por ejercicio)</td></tr>
-        <tr><td>6</td><td>Análisis de datos y creación del póster o recurso con IA</td></tr>
-        <tr><td>7</td><td>Socialización de resultados y entrega de la reflexión individual</td></tr>
+        <tr><td>1</td><td>Conformación de parejas y asignación de ejercicios</td></tr>
+        <tr><td>2</td><td>Estudio del ejercicio, preparación de la explicación y ensayo con el validador</td></tr>
+        <tr><td>3 a 6</td><td>Taller con 5 participantes de otros programas</td></tr>
+        <tr><td>7</td><td>Cierre en clase: revisión de resultados del curso</td></tr>
       </tbody>
     </table></div>
   </section>
 
   <footer>
-    La aplicación es una herramienta de apoyo formativo. Sus mediciones con cámara son aproximadas y no sustituyen la valoración clínica.
-    <br><a href="./">Validador</a> · <a href="guia.html">Guía de ejercicios</a> · <a href="datos-taller.html">Datos del taller</a>
+    El validador es una herramienta de apoyo formativo. Sus mediciones con cámara son aproximadas y no sustituyen la valoración clínica.
+    <br><a href="./">Validador</a> · <a href="guia.html">Guía de ejercicios</a>
   </footer>
 </div>
-<script>
-document.querySelectorAll("[data-copy]").forEach((b) => {
-  b.addEventListener("click", async () => {
-    const pre = b.parentElement.querySelector("pre");
-    try { await navigator.clipboard.writeText(pre.textContent); b.textContent = "Copiado"; }
-    catch { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Selecciona y copia"; }
-    setTimeout(() => (b.textContent = "Copiar"), 2000);
-  });
-});
-</script>
 </body>
 </html>

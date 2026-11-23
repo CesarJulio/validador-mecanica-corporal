@@ -69,18 +69,18 @@ después de explicarles la técnica. Los registros llegan a la pestaña **Taller
    |---|---|
    | `taller.activo` | TRUE (casilla marcada) para activar el modo taller |
    | `taller.meta` | 10 (participantes por ejercicio) |
-   | `taller.datos_url` | el enlace CSV publicado de la pestaña Taller (paso 3) |
 
-3. **Publica la pestaña Taller** para la página de datos: Archivo → Compartir → Publicar en la Web →
-   en "Contenido publicado y configuración" elige solo **Hoja 1** y **Taller** (no Resultados, que tiene nombres).
-   En "Vínculo" elige la pestaña **Taller** y formato CSV, y copia ese enlace en `taller.datos_url`.
+3. **Privacidad:** en Archivo → Compartir → Publicar en la Web → "Contenido publicado y configuración",
+   publica solo **Hoja 1**. Así las pestañas Resultados y Taller no quedan visibles para nadie.
 
 Mientras `taller.activo` esté marcado, la app muestra "Registro del taller" en lugar de "Tus datos".
-Al terminar la actividad, desmárcalo para volver al modo práctica.
+Cada fila de Taller guarda: fecha, pareja, código del participante, programa, momento (antes o después),
+ejercicio y el resultado. Al terminar la actividad, desmárcalo para volver al modo práctica.
 
-Páginas para los estudiantes:
-- `guia-taller.html`: organización, protocolo con cada participante e instrucciones para crear el póster con IA.
-- `datos-taller.html`: avance de la meta, antes y después por ejercicio, descarga de datos y resumen para la IA.
+Para descargar los datos: abre la pestaña **Taller** y ve a **Archivo → Descargar → Microsoft Excel** o **CSV**.
+
+Página para los estudiantes: `guia-taller.html` (organización por parejas, preparación, protocolo con
+cada participante, cuidados, cierre y calendario).
 
 ## Vista docente
 

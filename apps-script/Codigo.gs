@@ -6,7 +6,7 @@
  */
 const HOJAS = {
   Resultados: ['Fecha', 'Nombre', 'Grupo', 'Ejercicio', 'Total', 'Correctas', 'Incorrectas', '% correcto', 'Criterio que más falló', 'Detalle por criterio', 'Fuente'],
-  Taller: ['Fecha', 'Equipo', 'Código participante', 'Programa', 'Momento', 'Ejercicio', 'Total', 'Correctas', 'Incorrectas', '% correcto', 'Criterio que más falló', 'Detalle por criterio', 'Fuente']
+  Taller: ['Fecha', 'Pareja', 'Código participante', 'Programa', 'Momento', 'Ejercicio', 'Total', 'Correctas', 'Incorrectas', '% correcto', 'Criterio que más falló', 'Detalle por criterio', 'Fuente']
 };
 
 function doPost(e) {

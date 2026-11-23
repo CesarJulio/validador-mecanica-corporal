@@ -229,7 +229,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
       <div class="panel" id="tallerPanel" hidden>
         <h2>Registro del taller</h2>
         <div class="student">
-          <label class="field" id="fTeam">Equipo facilitador<input id="tkTeam" type="text" maxlength="40" placeholder="Ej. Equipo 3"></label>
+          <label class="field" id="fTeam">Pareja (apellidos)<input id="tkTeam" type="text" maxlength="40" placeholder="Ej. Gómez – Ruiz"></label>
           <label class="field">Código del participante<input id="tkCode" class="code" type="text" readonly></label>
         </div>
         <label class="field" id="fProg" style="margin-top:10px">Programa académico del participante<input id="tkProg" type="text" list="progList" maxlength="60" placeholder="Ej. Ingeniería de sistemas"></label>
@@ -1056,7 +1056,7 @@ $("btnSend").onclick = async () => {
   let data;
   if (tallerOn) {
     const equipo = $("tkTeam").value.trim(), programa = $("tkProg").value.trim();
-    if (equipo.length < 2) { $("fTeam").classList.add("missing"); $("tkTeam").focus(); setMsg("Escribe el nombre del equipo facilitador.", "msg-bad"); return; }
+    if (equipo.length < 2) { $("fTeam").classList.add("missing"); $("tkTeam").focus(); setMsg("Escribe los apellidos de la pareja.", "msg-bad"); return; }
     if (programa.length < 3) { $("fProg").classList.add("missing"); $("tkProg").focus(); setMsg("Escribe el programa académico del participante.", "msg-bad"); return; }
     if (!$("tkConsent").checked) { $("fConsent").classList.add("missing"); setMsg("Confirma que el participante aceptó participar.", "msg-bad"); return; }
     if (!reps.length) { setMsg(`Aún no hay ${EX.units.toLowerCase()} para registrar.`, "msg-bad"); return; }
