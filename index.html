@@ -1077,7 +1077,8 @@ $("btnSend").onclick = async () => {
     setMomento("Después");
     setMsg(`Registrado ${data.codigo} (antes): ${data.porcentaje} % correcto. Ahora explica la técnica y repite el ejercicio con el mismo código.`, "msg-ok");
   } else {
-    setMsg(`Participante ${data.codigo} completo (después: ${data.porcentaje} %). Pulsa "Nuevo participante" para el siguiente.`, "msg-ok");
+    setMomento("Antes");
+    setMsg(`${data.ejercicio} listo para ${data.codigo} (después: ${data.porcentaje} %). Elige el siguiente ejercicio con el mismo código, o pulsa "Nuevo participante" si ya hizo todos.`, "msg-ok");
   }
 };
 
